@@ -1,10 +1,5 @@
-# Welcome
+## zx.click
 
-Welcome to Hu Zhixiang's website!
-
-## Project
-
-### zx.click
 Automatic mouse clicker for Windows  
 [Download (.zip)](zx-click.zip) |
 [Documents](zx.click) |
