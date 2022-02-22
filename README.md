@@ -1,4 +1,8 @@
-# Index
+---
+layout: default
+title: Project List
+description: Welcome to Hu Zhixiang's Website!
+---
 
 ## zx.click
 
