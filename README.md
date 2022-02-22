@@ -1,3 +1,5 @@
+# Index
+
 ## zx.click
 
 Automatic mouse clicker for Windows  
