@@ -2,7 +2,7 @@
 title: Home
 ---
 
-# hzx198's Website
+# Zhixiang\'s Website
 
 ## HuClicker
 
