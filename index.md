@@ -2,8 +2,6 @@
 title: Home
 ---
 
-# Zhixiang\'s Website
-
 ## HuClicker
 
 Automatic mouse clicker for Windows  
