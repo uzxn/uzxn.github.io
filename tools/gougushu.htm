@@ -1,31 +1,32 @@
 <html>
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width initial-scale=1">
-<title>验证勾股数</title>
-<script>
+  <meta charset="utf-8">
+  <meta name="viewport" 
+        content="width=device-width initial-scale=1">
+  <title>验证勾股数</title>
+  <script>
 function get_result() {
-var a, b, c, res_text;
-a = document.getElementById("a").value;
-b = document.getElementById("b").value;
-c = document.getElementById("c").value;
-res_text = "结果：不是勾股数";
-if (a*a + b*b === c*c) {
-res_text = "结果：是勾股数";
+  var a, b, c, res_text;
+  a = document.getElementById("a").value;
+  b = document.getElementById("b").value;
+  c = document.getElementById("c").value;
+  res_text = "结果：不是勾股数";
+  if (a*a + b*b === c*c) {
+    res_text = "结果：是勾股数";
+  }
+  document.getElementById("result").innerHTML = res_text;
 }
-document.getElementById("result").innerHTML = res_text;
-}
-</script>
+  </script>
 </head>
 
 <body>
-<h1>验证勾股数</h1>
-<form>
-第一个数（小）：<input id="a" type="text"><br>
-第二个数（小）：<input id="b" type="text"><br>
-第三个数（大）：<input id="c" type="text"><br>
-<button onclick="get_result()" type="button">开始验证</button>
-</form>
-<p id="result"></p>
+  <h1>验证勾股数</h1>
+  <form>
+    请输入 a 的值 <input id="a" type="text"><br>
+    请输入 b 的值 <input id="b" type="text"><br>
+    请输入 c 的值 <input id="c" type="text"><br>
+    <button onclick="get_result()" type="button">验证</button>
+  </form>
+  <p id="result"></p>
 </body>
 </html>
