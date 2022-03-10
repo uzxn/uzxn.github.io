@@ -17,6 +17,7 @@ Automatic mouse clicker for Windows
 ## Tools Online
 
 [验证勾股数](tools/gougushu.htm)
+[判断三角形类型](tools/sanjiaoleixing.htm)
 
 ## About Me
 
