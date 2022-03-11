@@ -16,9 +16,9 @@ Automatic mouse clicker for Windows
 
 ## Tools Online
 
-[验证勾股数](tools/gougushu.htm)
-[判断三角形类型](tools/sanjiaoleixing.htm)
+[验证勾股数](tools/gougu-num.htm)
+| [判断三角形类型](tools/type-of-triangle.htm)
 
 ## About Me
 
-You can email me at <hu.zhx@88.com>
+You can email me at <hzxhub@qq.com>
