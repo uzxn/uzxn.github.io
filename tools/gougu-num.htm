@@ -14,10 +14,8 @@ function get_result() {
   if (a > b) [a, b] = [b, a];
   if (b > c) [b, c] = [c, b];
   if (a > b) [a, b] = [b, a];
-  // 判断是否能构成三角形
-  if (c > b+a && c < b-a) {
-    res_text = "结果：无法构成三角形";
-  } else if (a*a + b*b === c*c) { // 判断勾股数
+  // 判断勾股数
+  if (a*a + b*b === c*c) {
     res_text = "结果：是勾股数";
   } else {
     res_text = "结果：不是勾股数"
