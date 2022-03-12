@@ -14,10 +14,11 @@ Automatic mouse clicker for Windows
 
 * (none)
 
-## Tools Online
+## Online Tools
 
-[验证勾股数](tools/gougu-num.htm)
-| [判断三角形类型](tools/type-of-triangle.htm)
+[验证勾股数](tools/gougushu.htm)
+| [判断三角形类型](tools/sanjiaoxing.htm)
+| [解一元二次方程](tools/fangcheng.htm)
 
 ## About Me
 
