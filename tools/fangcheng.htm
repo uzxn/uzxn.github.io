@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport"
+    content="width=device-width initial-scale=1">
+  <title>解一元二次方程</title>
+  <script>
+function get_result() {
+  var a, b, c, x1, x2, delta;
+  a = document.getElementById("a").value;
+  b = document.getElementById("b").value;
+  c = document.getElementById("c").value;
+  // 计算判别式
+  delta = b*b - 4*a*c;
+  if (delta < 0) {
+    res_text = "解得：方程无实根";
+  } else if (delta === 0) {
+    x1 = (-1*b) / (2*a);
+    res_text = `解得：x1 = x2 = ${x1}`;
+  } else {
+    x1 = (-1*b + Math.sqrt(delta)) / (2*a);
+    x2 = (-1*b - Math.sqrt(delta)) / (2*a);
+    res_text = `解得：x1 = ${x1} , x2 = ${x2}`;
+  }
+  document.getElementById("result").innerHTML = res_text;
+}
+  </script>
+</head>
+
+<body>
+<div align="center">
+  <h1>解一元二次方程</h1>
+  <p>请输入三个系数 a, b, c</p>
+  <input type="text" id="a" size="2">x² +
+  <input type="text" id="b" size="2">x +
+  <input type="text" id="c" size="2"> = 0
+  <input type="submit" onclick="get_result()" value="求解">
+  <p id="result"></p>
+</div>
+</body>
+</html>
