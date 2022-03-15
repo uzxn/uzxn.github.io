@@ -11,18 +11,13 @@ function get_result() {
   a = document.getElementById("a").value;
   b = document.getElementById("b").value;
   c = document.getElementById("c").value;
-  // 判断能否构成三角形
-  if (b-a < c && c < b+a) {
-    // 判断三角形类型
-    if (a*a + b*b > c*c) {
-      res_text = "结果：锐角三角形";
-    } else if (a*a + b*b === c*c) {
-      res_text = "结果：直角三角形";
-    } else {
-      res_text = "结果：钝角三角形";
-    }
+  // 判断三角形类型
+  if (a*a + b*b > c*c) {
+    res_text = "结果：锐角三角形";
+  } else if (a*a + b*b === c*c) {
+    res_text = "结果：直角三角形";
   } else {
-    res_text = "结果：无法构成三角形";
+    res_text = "结果：钝角三角形";
   }
   document.getElementById("result").innerHTML = res_text;
 }
@@ -36,7 +31,7 @@ function get_result() {
   a = <input type="text" id="a" size="2">,
   b = <input type="text" id="b" size="2">,
   c = <input type="text" id="c" size="2">
-  <input type="submit" onclick="get_result()" value="判断">
+  <button onclick="get_result()">判断</button>
   <p id="result"></p>
 </div>
 </body>
