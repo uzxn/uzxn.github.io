@@ -19,6 +19,7 @@ Automatic mouse clicker for Windows
 [验证勾股数](tools/gougushu.htm)
 | [判断三角形类型](tools/sanjiaoxing.htm)
 | [解一元二次方程](tools/fangcheng.htm)
+| [文字转语音](tools/google-tts.htm)
 
 ## About Me
 
