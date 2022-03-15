@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport"
+    content="width=device-width initial-scale=1">
+  <title>文字转语音</title>
+  <script>
+function get_result() {
+  var text, lang;
+  text = document.getElementById("text").value;
+  lang = document.getElementById("lang").value;
+  const GoogleTTS = require("../GoogleTTS.js");
+  GoogleTTS.getUrl(text, lang).then(console.log);
+  </script>
+</head>
+
+<body>
+<div align="center">
+  <h1>文字转语音</h1>
+  <p>请输入文字和语言代码</p>
+  文字：<input type="text" id="text">
+  语言代码：<input type="text" id="lang">
+  <input type="submit" onclick="get_result()" value="转换">
+  <p id="result"></p>
+</div>
+</body>
+</html>
