@@ -11,7 +11,7 @@ function get_result() {
   text = document.getElementById("text").value;
   lang = document.getElementById("lang").value;
   const GoogleTTS = require("../GoogleTTS.js");
-  GoogleTTS.getUrl(text, lang).then(console.log);
+  GoogleTTS.getUrl(text, lang).then(document.write);
   </script>
 </head>
 
@@ -19,9 +19,9 @@ function get_result() {
 <div align="center">
   <h1>文字转语音</h1>
   <p>请输入文字和语言代码</p>
-  文字：<input type="text" id="text">
+  文字：<input type="text" id="text"><br>
   语言代码：<input type="text" id="lang">
-  <input type="submit" onclick="get_result()" value="转换">
+  <button onclick="get_result()">转换</button>
   <p id="result"></p>
 </div>
 </body>
