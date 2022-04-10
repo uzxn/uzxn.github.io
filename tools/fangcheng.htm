@@ -30,14 +30,14 @@ function get_result() {
 <body>
 <div class="container">
 <h1>解一元二次方程</h1>
-<p>请输入三个系数 a, b, c</p>
 <form class="form-inline" role="form">
 <div class="form-group">
+<lable>请输入三个系数 a, b, c</lable>
 <input class="form-control" type="text" id="a" placeholder="请输入 a 的值">
 <input class="form-control" type="text" id="b" placeholder="请输入 b 的值">
 <input class="form-control" type="text" id="c" placeholder="请输入 c 的值">
-<button class="btn btn-default" onclick="get_result()">求解</button>
 </div>
+<button class="btn btn-default" type="button" onclick="get_result()">求解</button>
 </form>
 <p id="result"></p>
 </div>
