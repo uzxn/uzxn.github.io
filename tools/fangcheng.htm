@@ -23,7 +23,7 @@ function get_result() {
     x2 = (-1*b - Math.sqrt(delta)) / (2*a);
     res_text = `解得：x1 = ${x1}, x2 = ${x2}`;
   }
-  document.getElementById("result").innerHTML = res_text;
+  document.getElementById("result").innerHTML = `<hr> <p>${res_text}</p>`;
 }
 </script>
 </head>
@@ -39,7 +39,7 @@ function get_result() {
 </div>
 <button class="btn btn-default" type="button" onclick="get_result()">求解</button>
 </form>
-<p class="text-primary" id="result"></p>
+<div id="result"></div>
 </div>
 </body>
 </html>
