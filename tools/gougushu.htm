@@ -2,33 +2,27 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <meta name="viewport"
-    content="width=device-width initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/light.min.css">
   <title>验证勾股数</title>
   <script>
 function get_result() {
-  var a, b, c, res_text;
+  var a, b, c, text = "结果：不是勾股数";
   a = document.getElementById("a").value;
   b = document.getElementById("b").value;
   c = document.getElementById("c").value;
-  // 判断勾股数
-  if (a*a + b*b === c*c) {
-    res_text = "结果：是勾股数";
-  } else {
-    res_text = "结果：不是勾股数"
-  }
-  document.getElementById("result").innerHTML = res_text;
+  if (a*a + b*b === c*c) text = "结果：是勾股数";
+  document.getElementById("result").innerHTML = text;
 }
   </script>
 </head>
 
 <body>
-<div align="center">
   <h1>验证勾股数</h1>
   <p>请输入从小到大排列的三个数 a, b, c</p>
-  a = <input type="text" id="a" size="2">,
-  b = <input type="text" id="b" size="2">,
-  c = <input type="text" id="c" size="2">
+  <input type="text" id="a" placeholder="请输入 a 的值">
+  <input type="text" id="b" placeholder="请输入 b 的值">
+  <input type="text" id="c" placeholder="请输入 c 的值">
   <button onclick="get_result()">验证</button>
   <p id="result"></p>
 </div>
