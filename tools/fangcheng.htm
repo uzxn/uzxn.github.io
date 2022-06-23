@@ -7,23 +7,22 @@
 <title>解一元二次方程</title>
 <script>
 function get_result() {
-  var a, b, c, x1, x2, delta;
+  var a, b, c, x1, x2, delta, text;
   a = document.getElementById("a").value;
   b = document.getElementById("b").value;
   c = document.getElementById("c").value;
-  // 计算判别式
   delta = b*b - 4*a*c;
   if (delta < 0) {
-    res_text = "解得：方程无实根";
+    text = "解得：方程无实根";
   } else if (delta === 0) {
     x1 = (-1*b) / (2*a);
-    res_text = `解得：x1 = x2 = ${x1}`;
+    text = `解得：x1 = x2 = ${x1}`;
   } else {
     x1 = (-1*b + Math.sqrt(delta)) / (2*a);
     x2 = (-1*b - Math.sqrt(delta)) / (2*a);
-    res_text = `解得：x1 = ${x1}, x2 = ${x2}`;
+    text = `解得：x1 = ${x1}, x2 = ${x2}`;
   }
-  document.getElementById("result").innerHTML = `<hr> <p>${res_text}</p>`;
+  document.getElementById("result").innerHTML = text;
 }
 </script>
 </head>
