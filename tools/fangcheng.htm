@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width initial-scale=1">
-<link href="../bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://hzx.neocities.org/style.css">
 <title>解一元二次方程</title>
 <script>
 function get_result() {
@@ -28,19 +28,13 @@ function get_result() {
 </script>
 </head>
 <body>
-<div class="container">
 <h1>解一元二次方程</h1>
 <hr>
-<form role="form">
-<div class="form-group">
 <p>请输入三个系数 a, b, c</p>
-<input class="form-control" type="text" id="a" placeholder="请输入 a 的值">
-<input class="form-control" type="text" id="b" placeholder="请输入 b 的值">
-<input class="form-control" type="text" id="c" placeholder="请输入 c 的值">
-</div>
-<button class="btn btn-default" type="button" onclick="get_result()">求解</button>
-</form>
+<input type="text" id="a" placeholder="请输入 a 的值">&emsp;
+<input type="text" id="b" placeholder="请输入 b 的值">&emsp;
+<input type="text" id="c" placeholder="请输入 c 的值"><br>
+<button type="button" onclick="get_result()">求解</button>
 <div id="result"></div>
-</div>
 </body>
 </html>
