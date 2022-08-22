@@ -3,9 +3,9 @@
 <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
-对于一元二次方程 $$ax^2 + bx + c = 0 (a \neq 0)$$，令 $$\Delta = b^2 - 4ac$$
+对于一元二次方程 $$ax^2 + bx + c = 0$$，$$\Delta = b^2 - 4ac$$
 
-则当 $$\Delta \geq 0$$ 时，设方程的两根为 $$p, q$$，则 $$p + q = -\frac{b}{a}, pq = \frac{c}{a}$$
+当 $$\Delta \geq 0$$ 时，设方程的两根为 $$p, q$$，则 $$p + q = -\frac{b}{a}, pq = \frac{c}{a}$$
 
 ---
 
