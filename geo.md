@@ -1,5 +1,8 @@
 ## 几何证明
 
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
 【题 1】
 如下图，平行四边形 ABDC，点 C 在 BE 上，点 E 是 AF 中点。求证：BE // DF
 ![geo1](img/geo1.jpg)
