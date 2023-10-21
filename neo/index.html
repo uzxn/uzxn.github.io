@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito:,i,b">
+    <link rel='stylesheet' href='./lit.css'>
+    <script src='./tools.js'></script>
+    <title>MUG TOOLS!</title>
+  </head>
+  <body class='c'>
+    <b><i>MUG TOOLS!</i></b>
+    <hr>
+    <h5>Malody 4K 段位单曲 ACC 计算</h5>
+    请选择 / 输入：
+    <select name='dan' id="dan">
+      <option value="0">0th Dan</option>
+      <option value="1">1st Dan</option>
+      <option value="2">2nd Dan</option>
+      <option value="3">3rd Dan</option>
+      <option value="4">4th Dan</option>
+      <option value="5">5th Dan</option>
+      <option value="6">6th Dan</option>
+      <option value="7">7th Dan</option>
+      <option value="8">8th Dan</option>
+      <option value="9">9th Dan</option>
+      <option value="10">10th Dan</option>
+      <option value="11">Ex-1 Dan</option>
+      <option value="12">Ex-2 Dan</option>
+      <option value="13">Ex-3 Dan</option>
+      <option value="14">Ex-4 Dan</option>
+      <option value="15">Ex-5 Dan</option>
+      <option value="16">Ex-6 Dan</option>
+      <option value="17">Ex-7 Dan</option>
+      <option value="18">Ex-8 Dan</option>
+      <option value="19">Ex-9 Dan</option>
+      <option value="20">Ex-Final Dan</option>
+    </select><br>
+    <input class="card" type='text' id='o1' placeholder='第一首结束时 ACC'>
+    <input class="card" type='text' id='o2' placeholder='第二首结束时 ACC'>
+    <input class="card" type='text' id='o3' placeholder='第三首结束时 ACC'>
+    <input class="card" type='text' id='o4' placeholder='第四首结束时 ACC'>&ensp;
+    <button class="btn primary" type='button' onclick='malody_acc()'>确定 &darr;</button>
+    <div id='malody_acc_res'></div>
+    <hr>
+    <h5>Malody ACC 计算</h5>
+    请输入：<br>
+    <input class="card" type='text' id='best' placeholder='Best 个数'>
+    <input class="card" type='text' id='cool' placeholder='Cool 个数'>
+    <input class="card" type='text' id='good' placeholder='Good 个数'>
+    <input class="card" type='text' id='miss' placeholder='Miss 个数'>&ensp;
+    <button class="btn primary" type='button' onclick='ma_acc()'>确定 &darr;</button>
+    <div id='ma_acc_res'></div>
+    <hr>
+    <h5>Phigros 单曲 rks 计算</h5>
+    请输入：<br>
+    <input class="card" type='text' id='lv' placeholder='定数，例：15.9'>
+    <input class="card" type='text' id='acc' placeholder='ACC，例：99.66'>&ensp;
+    <button class="btn primary" type='button' onclick='phi_rks()'>确定 &darr;</button>
+    <div id='phi_rks_res'></div>
+  </body>
+</html>
