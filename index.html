@@ -1,46 +1,62 @@
 <!doctype html>
 <html>
-    <head>
-        <meta charset='utf-8'>
-        <meta name='viewport' content='width=device-width initial-scale=1'>
-        <link rel='stylesheet' href='./style.css'>
-        <script src='./tools.js'></script>
-        <title>h5zx Webtrash</title>
-    </head>
-    <body>
-        <h1>h5zx Webtrash</h1>
-        <hr>
-        <h3>在线工具 Online Tools</h3>
-        <ul><li><b>验证勾股数</b>：判断三个数是否为勾股数</li>
-            <ul><li>请输入从小到大排列的三个数 a, b, c</li>
-                a =<input type='text' id='a1' placeholder='请输入 a 的值'>,
-                b =<input type='text' id='b1' placeholder='请输入 b 的值'>,
-                c =<input type='text' id='c1' placeholder='请输入 c 的值'>
-                <button type='button' onclick='gougu()'>确定</button>
-                <li id='gougu_res'></li>
-            </ul>
-        </ul>
-        <!--
-            <a href='#triangle'>判断三角形类型</a>：输入三角形的三边长，判断该三角形的类型
-            <a href='#equation'>解一元二次方程</a>：输入一元二次方程的三个系数，求该方程的解
-            <a href='#random'>随机数生成器</a>：
-            <a href='#editor'>所见即所得编辑器</a>：基于开源项目 Summernote 的富文本编辑器
-        -->
-        <ul><li><b>三角形分类</b>：输入三边长，将其按角分类</li>
-            <ul><li>请输入从小到大排列的三边长 a, b, c</li>
-                a =<input type='text' id='a2' placeholder='请输入 a 的值'>,
-                b =<input type='text' id='b2' placeholder='请输入 b 的值'>,
-                c =<input type='text' id='c2' placeholder='请输入 c 的值'>
-                <button type='button' onclick='triangle()'>确定</button>
-                <li id='triangle_res'></li>
-            </ul>
-        </ul>
-        <ul><li><b>随机数生成</b>：随机生成 0~x 之间的整数</li>
-            <ul><li>请输入上限 x</li>
-                x =<input type='text' id='x' placeholder='请输入上限'>
-                <button type='button' onclick='random()'>生成</button>
-                <li id='random_res'></li>
-            </ul>
-        </ul>
-    </body>
+  <head>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito:,i,b">
+    <link rel='stylesheet' href='./lit.css'>
+    <script src='./tools.js'></script>
+    <title>MUG TOOLS!</title>
+  </head>
+  <body class='c'>
+    <b><i>MUG TOOLS!</i></b>
+    <hr>
+    <h5>Malody 4K 段位单曲 ACC 计算</h5>
+    请选择 / 输入：
+    <select name='dan' id="dan">
+      <option value="0">0th Dan</option>
+      <option value="1">1st Dan</option>
+      <option value="2">2nd Dan</option>
+      <option value="3">3rd Dan</option>
+      <option value="4">4th Dan</option>
+      <option value="5">5th Dan</option>
+      <option value="6">6th Dan</option>
+      <option value="7">7th Dan</option>
+      <option value="8">8th Dan</option>
+      <option value="9">9th Dan</option>
+      <option value="10">10th Dan</option>
+      <option value="11">Ex-1 Dan</option>
+      <option value="12">Ex-2 Dan</option>
+      <option value="13">Ex-3 Dan</option>
+      <option value="14">Ex-4 Dan</option>
+      <option value="15">Ex-5 Dan</option>
+      <option value="16">Ex-6 Dan</option>
+      <option value="17">Ex-7 Dan</option>
+      <option value="18">Ex-8 Dan</option>
+      <option value="19">Ex-9 Dan</option>
+      <option value="20">Ex-Final Dan</option>
+    </select><br>
+    <input class="card" type='text' id='o1' placeholder='第一首结束时 ACC'>
+    <input class="card" type='text' id='o2' placeholder='第二首结束时 ACC'>
+    <input class="card" type='text' id='o3' placeholder='第三首结束时 ACC'>
+    <input class="card" type='text' id='o4' placeholder='第四首结束时 ACC'>&ensp;
+    <button class="btn primary" type='button' onclick='malody_acc()'>确定 &darr;</button>
+    <div id='malody_acc_res'></div>
+    <hr>
+    <h5>Malody ACC 计算</h5>
+    请输入：<br>
+    <input class="card" type='text' id='best' placeholder='Best 个数'>
+    <input class="card" type='text' id='cool' placeholder='Cool 个数'>
+    <input class="card" type='text' id='good' placeholder='Good 个数'>
+    <input class="card" type='text' id='miss' placeholder='Miss 个数'>&ensp;
+    <button class="btn primary" type='button' onclick='ma_acc()'>确定 &darr;</button>
+    <div id='ma_acc_res'></div>
+    <hr>
+    <h5>Phigros 单曲 rks 计算</h5>
+    请输入：<br>
+    <input class="card" type='text' id='lv' placeholder='定数，例：15.9'>
+    <input class="card" type='text' id='acc' placeholder='ACC，例：99.66'>&ensp;
+    <button class="btn primary" type='button' onclick='phi_rks()'>确定 &darr;</button>
+    <div id='phi_rks_res'></div>
+  </body>
 </html>

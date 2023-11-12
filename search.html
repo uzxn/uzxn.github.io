@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="http://cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <style>
+      * {box-sizing: border-box;}
+      body {margin: 0; padding: 0;}
+      div.search {padding: 240px 0;}
+      form {position: relative; width: 300px; margin: 0 auto;}
+      input, button {border: none; outline: none;}
+      input {width: 100%; height: 50px; padding-left: 13px;}
+      button {height: 50px; width: 50px; cursor: pointer; position: absolute;}
+      .bar1 input {border: 2px solid #333333; border-radius: 5px; background: #fbfbfb; font-size: 16px; color: #666666;}
+      .bar1 button {top: 0; right: 0; background: #333333; border-radius: 0 5px 5px 0;}
+      .bar1 button:before {content: "\f002"; font-family: FontAwesome; font-size: 20px; color: #ffffff;}
+    </style>
+    <title>Search</title>
+  </head>
+  <body>
+    <div class="search bar1">
+      <form action="https://cn.bing.com/search">
+        <input type="text" name="q" placeholder="请输入搜索关键词">
+        <button type="submit"></button>
+      </form>
+    </div>
+  </body>
+</html>

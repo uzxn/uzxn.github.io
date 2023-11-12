@@ -1,0 +1,38 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <link rel="stylesheet" href="./light.min.css">
+    <script src='./tools.js'></script>
+    <title>uzxn WebTools</title>
+  </head>
+  <body>
+    <h1>uzxn WebTools</h1>
+    <hr>
+    <h2>判断勾股数</h2>
+    <p>判断三个数是否为勾股数</p>
+    <p>请输入从小到大排列的三个数 a, b, c</p>
+    <input type='text' id='a1' placeholder='请输入 a 的值'>
+    <input type='text' id='b1' placeholder='请输入 b 的值'>
+    <input type='text' id='c1' placeholder='请输入 c 的值'>
+    <button type='button' onclick='gougu()'>确定</button>
+    <p id='gougu_res'></p>
+    <hr>
+    <h2>三角形分类</h2>
+    <p>输入三边长，将其按角分类</p>
+    <p>请输入从小到大排列的三边长 a, b, c</p>
+    <input type='text' id='a2' placeholder='请输入 a 的值'>
+    <input type='text' id='b2' placeholder='请输入 b 的值'>
+    <input type='text' id='c2' placeholder='请输入 c 的值'>
+    <button type='button' onclick='triangle()'>确定</button>
+    <p id='triangle_res'></p>
+    <hr>
+    <h2>随机数生成</h2>
+    <p>随机生成 0 ~ x 之间的整数</p>
+    <p>请输入上限 x</p>
+    <input type='text' id='x' placeholder='请输入上限'>
+    <button type='button' onclick='random()'>生成</button>
+    <p id='random_res'></p>
+  </body>
+</html>
