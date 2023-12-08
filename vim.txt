@@ -1,4 +1,4 @@
-<pre>" 置顶 Sticky ==================================
+" 置顶 Sticky ==================================
 vim9script
 filetype on
 filetype indent on
@@ -126,4 +126,4 @@ nnoremap ;gu   :!git push origin main<cr>
 set autochdir
 set wildmenu
 set wildmode=full
-set nocompatible</pre>
+set nocompatible
