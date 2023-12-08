@@ -5,13 +5,13 @@
     <meta name='viewport' content='width=device-width, initial-scale=1'>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito:,i,b">
     <link rel='stylesheet' href='./lit.css'>
-    <script>function ua() {document.getElementById("ua").innerHTML = navigator.userAgent;}</script>
+    <script>document.getElementById("ua").innerHTML = navigator.userAgent;</script>
     <title>User Agent</title>
   </head>
   <body class='c'>
     <b><i>User Agent</i></b>
     <hr>
-    <button class="btn primary" type='button' onclick='ua()'>获取当前 UA</button>
-    <div id='ua'></div>
+    <b>&darr; 当前浏览器 UA</b><br>
+    <pre><code id='ua'></code></pre>
   </body>
 </html>
