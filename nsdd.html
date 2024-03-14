@@ -1,0 +1,69 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset='utf-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1'>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito:,i,b">
+  <link rel='stylesheet' href='./lit.css'>
+  <script>
+    function generate() {
+      var s, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14;
+      if (document.getElementById("1").value == "") s1 = document.getElementById("1").getAttribute("placeholder");
+      else s1 = document.getElementById("1").value;
+      if (document.getElementById("2").value == "") s2 = document.getElementById("2").getAttribute("placeholder");
+      else s2 = document.getElementById("2").value;
+      if (document.getElementById("3").value == "") s3 = document.getElementById("3").getAttribute("placeholder");
+      else s3 = document.getElementById("3").value;
+      if (document.getElementById("4").value == "") s4 = document.getElementById("4").getAttribute("placeholder");
+      else s4 = document.getElementById("4").value;
+      if (document.getElementById("5").value == "") s5 = document.getElementById("5").getAttribute("placeholder");
+      else s5 = document.getElementById("5").value;
+      if (document.getElementById("6").value == "") s6 = document.getElementById("6").getAttribute("placeholder");
+      else s6 = document.getElementById("6").value;
+      if (document.getElementById("7").value == "") s7 = document.getElementById("7").getAttribute("placeholder");
+      else s7 = document.getElementById("7").value;
+      if (document.getElementById("8").value == "") s8 = document.getElementById("8").getAttribute("placeholder");
+      else s8 = document.getElementById("8").value;
+      if (document.getElementById("9").value == "") s9 = document.getElementById("9").getAttribute("placeholder");
+      else s9 = document.getElementById("9").value;
+      if (document.getElementById("10").value == "") s10 = document.getElementById("10").getAttribute("placeholder");
+      else s10 = document.getElementById("10").value;
+      if (document.getElementById("11").value == "") s11 = document.getElementById("11").getAttribute("placeholder");
+      else s11 = document.getElementById("11").value;
+      if (document.getElementById("12").value == "") s12 = document.getElementById("12").getAttribute("placeholder");
+      else s12 = document.getElementById("12").value;
+      if (document.getElementById("13").value == "") s13 = document.getElementById("13").getAttribute("placeholder");
+      else s13 = document.getElementById("13").value;
+      if (document.getElementById("14").value == "") s14 = document.getElementById("14").getAttribute("placeholder");
+      else s14 = document.getElementById("14").value;
+      s = "你说得对，但是《" + s1 + "》是由" + s2 + "自主研发的一款全新" + s3 + "游戏。游戏发生在一个被称作「" + s4 + "」的幻想世界，在这里，被" + s5 + "选中的" + s6 + "将被授予「" + s7 + "」，导引" + s8 + "之力。玩家将扮演一位名为「" + s9 + "」的神秘角色，在自由的" + s10 + "中邂逅性格各异、能力独特的" + s11 + "们，和他们一起击败" + s12 + "，找回失散的" + s13 + "——同时，逐步发掘「" + s14 + "」的真相。"
+      document.getElementById("result").innerHTML = s;
+    }
+  </script>
+  <title>你说得对，但是……</title>
+</head>
+
+<!--
+你说得对，但是《原神》是由米哈游自主研发的一款全新开放世界冒险游戏。游戏发生在一个被称作「提瓦特」的幻想世界，在这里，被神选中的人将被授予「神之眼」，导引元素之力。玩家将扮演一位名为「旅行者」的神秘角色，在自由的旅行中邂逅性格各异、能力独特的同伴们，和他们一起击败强敌，找回失散的亲人——同时，逐步发掘「原神」的真相。
+-->
+
+<body class='c'>
+  <b><i>你说得对，但是……</i></b>
+  <hr>
+  <h6>若输入为空则自动填充“原”文。</h6>
+  <p>你说得对，但是《<input size='8' type='text' id='1' placeholder='原神'>》是由<input size='8' type='text' id='2'
+      placeholder='米哈游'>自主研发的一款全新<input size='8' type='text' id='3' placeholder='开放世界冒险'>游戏。游戏发生在一个被称作「<input size='8'
+      type='text' id='4' placeholder='提瓦特'>」的幻想世界，在这里，被<input size='8' type='text' id='5' placeholder='神'>选中的<input
+      size='8' type='text' id='6' placeholder='人'>将被授予「<input size='8' type='text' id='7' placeholder='神之眼'>」，导引<input
+      size='8' type='text' id='8' placeholder='元素'>之力。玩家将扮演一位名为「<input size='8' type='text' id='9'
+      placeholder='旅行者'>」的神秘角色，在自由的<input size='8' type='text' id='10' placeholder='旅行'>中邂逅性格各异、能力独特的<input size='8'
+      type='text' id='11' placeholder='同伴'>们，和他们一起击败<input size='8' type='text' id='12' placeholder='强敌'>，找回失散的<input
+      size='8' type='text' id='13' placeholder='亲人'>——同时，逐步发掘「<input size='8' type='text' id='14' placeholder='原神'>」的真相。
+  </p>
+  &ensp;
+  <button class="btn primary" type='button' onclick='generate()'>生成 &darr;</button>
+  <div id='result'></div>
+</body>
+
+</html>
