@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset='utf-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1'>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito:,i,b">
+  <link rel='stylesheet' href='./lit.css'>
+  <script src='./tools.js'></script>
+  <title>MUG TOOLS!</title>
+</head>
+
+<body class='c'>
+  <b><i>MUG TOOLS!</i></b>
+  <hr>
+  <h5>Malody 4K 段位单曲 ACC 计算</h5>
+  <p>&rarr; <a href='dan.html'><i>ACC Calculator</i></a></p>
+  <hr>
+  <h5>Malody ACC 计算</h5>
+  请输入：<br>
+  <input class="card" type='text' id='best' placeholder='Best 个数'>
+  <input class="card" type='text' id='cool' placeholder='Cool 个数'>
+  <input class="card" type='text' id='good' placeholder='Good 个数'>
+  <input class="card" type='text' id='miss' placeholder='Miss 个数'>&ensp;
+  <button class="btn primary" type='button' onclick='ma_acc()'>确定 &darr;</button>
+  <div id='ma_acc_res'></div>
+  <hr>
+  <h5>Phigros 单曲 rks 计算</h5>
+  请输入：<br>
+  <input class="card" type='text' id='lv' placeholder='定数，例：15.9'>
+  <input class="card" type='text' id='acc' placeholder='ACC，例：99.66'>&ensp;
+  <button class="btn primary" type='button' onclick='phi_rks()'>确定 &darr;</button>
+  <div id='phi_rks_res'></div>
+</body>
+
+</html>
