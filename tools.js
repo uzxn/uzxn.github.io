@@ -1,24 +1,3 @@
-function phi_rks() {
-  var lv, acc, res;
-  lv = Number(document.getElementById("lv").value);
-  acc = Number(document.getElementById("acc").value);
-  if (acc < 70) res = 0;
-  else res = Math.pow((acc - 55) / 45, 2) * lv;
-  res = "单曲 rks：" + res.toFixed(4);
-  document.getElementById("phi_rks_res").innerHTML = res;
-}
-
-function ma_acc() {
-  var best, cool, good, miss;
-  best = Number(document.getElementById("best").value);
-  cool = Number(document.getElementById("cool").value);
-  good = Number(document.getElementById("good").value);
-  miss = Number(document.getElementById("miss").value);
-  res = (best * 100 + cool * 75 + good * 40) / (best + cool + good + miss);
-  res = "ACC：" + res.toFixed(4) + "%";
-  document.getElementById("ma_acc_res").innerHTML = res;
-}
-
 function malody_acc() {
   var dan, n1, n2, n3, n4, n12, n123, n124, n134, n234, n1234, o1, o2, o3, o4, std;
   var s, s2, s3, s4, a234, a134, a124, a123, a1, a2, a3, a4, str1, str2, str3, str4;

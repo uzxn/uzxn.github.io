@@ -8,6 +8,26 @@
   <link rel='stylesheet' href='./lit.css'>
   <script src='./tools.js'></script>
   <title>MUG TOOLS!</title>
+  <script>
+    function calcPhigrosRKS() {
+      let res = 0, lv, acc;
+      lv = Number(document.getElementById("lv").value);
+      acc = Number(document.getElementById("acc").value);
+      if (acc >= 70) res = Math.pow((acc - 55) / 45, 2) * lv;
+      res = "单曲 rks：" + res.toFixed(4);
+      document.getElementById("phigros-rks").innerHTML = res;
+    }
+    function calcMalodyACC() {
+      let best, cool, good, miss, res;
+      best = Number(document.getElementById("best").value);
+      cool = Number(document.getElementById("cool").value);
+      good = Number(document.getElementById("good").value);
+      miss = Number(document.getElementById("miss").value);
+      res = (best * 100 + cool * 75 + good * 40) / (best + cool + good + miss);
+      res = "ACC：" + res.toFixed(4) + "%";
+      document.getElementById("malody-acc").innerHTML = res;
+    }
+  </script>
 </head>
 
 <body class='c'>
@@ -21,16 +41,16 @@
   <input class="card" type='text' id='best' placeholder='Best 个数'>
   <input class="card" type='text' id='cool' placeholder='Cool 个数'>
   <input class="card" type='text' id='good' placeholder='Good 个数'>
-  <input class="card" type='text' id='miss' placeholder='Miss 个数'>&ensp;
-  <button class="btn primary" type='button' onclick='ma_acc()'>确定 &darr;</button>
-  <div id='ma_acc_res'></div>
+  <input class="card" type='text' id='miss' placeholder='Miss 个数'>
+  <button class="btn primary" type='button' onclick='calcMalodyACC()'>确定 &darr;</button>
+  <div id='malody-acc'></div>
   <hr>
   <h5>Phigros 单曲 rks 计算</h5>
   请输入：<br>
   <input class="card" type='text' id='lv' placeholder='定数，例：15.9'>
-  <input class="card" type='text' id='acc' placeholder='ACC，例：99.66'>&ensp;
-  <button class="btn primary" type='button' onclick='phi_rks()'>确定 &darr;</button>
-  <div id='phi_rks_res'></div>
+  <input class="card" type='text' id='acc' placeholder='ACC，例：99.66'>
+  <button class="btn primary" type='button' onclick='calcPhigrosRKS()'>确定 &darr;</button>
+  <div id='phigros-rks'></div>
 </body>
 
 </html>
