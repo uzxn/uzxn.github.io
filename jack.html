@@ -5,7 +5,7 @@
   <meta charset='utf-8'>
   <meta name='viewport' content='width=device-width, initial-scale=1'>
   <link rel="stylesheet" href="https://fonts.googleapis.cn/css?family=Nunito:,i,b">
-  <link rel='stylesheet' href='./lit.css'>
+  <link rel='stylesheet' href='https://uzxn.github.io/lit.css'>
   <title>叠语加密器</title>
   <script>
     const base16Chars = '草空天黑石桑巴蝎鱼章燕子大舞飞英';
@@ -54,11 +54,11 @@
 <body class='c'>
   <b><i>叠语加密器</i></b>
   <hr>
-  <input class="card w-100" type='text' id='inp' placeholder='请输入待加密文本'>
+  <textarea class="card w-100" rows=10 id='inp' placeholder='请输入待加密文本'></textarea>
   <button class="btn primary" type='button' onclick='base16Encode()'>加密 &darr;</button>
   <button class="btn primary" type='button' onclick='base16Decode()'>解密 &uarr;</button>
   <br>
-  <input class="card w-100" type='text' id='res' placeholder='请输入待解密文本'>
+  <textarea class="card w-100" rows=10 id='res' placeholder='请输入待解密文本'></textarea>
 </body>
 
 </html>
