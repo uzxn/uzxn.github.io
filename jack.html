@@ -1,0 +1,64 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset='utf-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1'>
+  <link rel="stylesheet" href="https://fonts.googleapis.cn/css?family=Nunito:,i,b">
+  <link rel='stylesheet' href='https://uzxn.github.io/lit.css'>
+  <title>叠语加密器</title>
+  <script>
+    const base16Chars = '草空天黑石桑巴蝎鱼章燕子大舞飞英';
+    function base16Encode() {
+      let input = document.getElementById("inp").value;
+      // 将字符串转换为 UTF-8 字节
+      let utf8Bytes = new TextEncoder().encode(input);
+      // 将每个字节转换为二进制字符串
+      let binaryString = '';
+      for (let i = 0; i < utf8Bytes.length; i++) {
+        binaryString += utf8Bytes[i].toString(2).padStart(8, '0');
+      }
+      // 按 4 位拆分
+      const chunks = [];
+      for (let i = 0; i < binaryString.length; i += 4) {
+        chunks.push(binaryString.slice(i, i + 4));
+      }
+      // 查找对应的 Base64 字符
+      let base16Encoded = chunks.map(chunk => {
+        const index = parseInt(chunk, 2); // 将二进制转换为数字
+        return base16Chars.charAt(index);
+      }).join('');
+      document.getElementById("res").value = base16Encoded;
+    }
+    function base16Decode() {
+      let input = document.getElementById("res").value;
+      // 将每个 Base64 字符转换为 4 位二进制
+      let binaryString = '';
+      for (let i = 0; i < input.length; i++) {
+        const index = base16Chars.indexOf(input.charAt(i)); // 查找字符的位置
+        binaryString += index.toString(2).padStart(4, '0'); // 将位置转换为 4 位二进制
+      }
+      // 每 8 位一个字节，转换为字节
+      let decodedBytes = [];
+      for (let i = 0; i < binaryString.length; i += 8) {
+        const byte = binaryString.slice(i, i + 8);
+        decodedBytes.push(parseInt(byte, 2)); // 将二进制转为字节
+      }
+      // 将字节数组转换为 UTF-8 字符串
+      let decodedString = new TextDecoder().decode(new Uint8Array(decodedBytes));
+      document.getElementById("inp").value = decodedString;
+    }
+  </script>
+</head>
+
+<body class='c'>
+  <b><i>叠语加密器</i></b>
+  <hr>
+  <textarea class="card w-100" rows=10 id='inp' placeholder='请输入待加密文本'></textarea>
+  <button class="btn primary" type='button' onclick='base16Encode()'>加密 &darr;</button>
+  <button class="btn primary" type='button' onclick='base16Decode()'>解密 &uarr;</button>
+  <br>
+  <textarea class="card w-100" rows=10 id='res' placeholder='请输入待解密文本'></textarea>
+</body>
+
+</html>
