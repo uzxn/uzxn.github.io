@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset='utf-8'>
+  <meta name='viewport' content='width=device-width,initial-scale=1,user-scalable=no'>
+  <link rel='stylesheet' href='https://fonts.googleapis.cn/css?family=Nunito:,i,b'>
+  <link rel='stylesheet' href='./lit.css'>
+  <title>BPM 检测器</title>
+  <script>
+    var t = new Array();
+    function calc() {
+      t.push(Date.now());
+      if (t.length >= 2) {
+        var tm = t.at(-1) - t.at(0);
+        var bpm = ((t.length - 1) * 60000 / tm).toFixed(3);
+        document.getElementById("bpm").innerHTML = "平均 BPM：" + bpm;
+      }
+    }
+    function reset() {
+      t = new Array();
+      document.getElementById("bpm").innerHTML = "平均 BPM：0";
+    }
+  </script>
+</head>
+
+<body class='c'>
+  <b><i>BPM 检测器</i></b>
+  <hr>
+  <p>有节奏地点击按钮来测算 BPM！</p>
+  <div class="card row">
+    <div class="4 col">
+      <button class="btn w-100" type='button' onclick='reset()'>重置</button>
+    </div>
+    <div class="4 col" id="bpm" style="text-align:center;">平均 BPM：0</div>
+    <div class="4 col">
+      <button class="btn primary w-100" type='button' onclick='calc()'>点击我！</button>
+    </div>
+  </div>
+</body>
+
+</html>
