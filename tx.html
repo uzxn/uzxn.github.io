@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset='utf-8'>
+  <meta name='viewport' content='width=device-width,initial-scale=1'>
+  <link rel="stylesheet" href="https://fonts.googleapis.cn/css?family=Nunito:,i,b">
+  <link rel='stylesheet' href='./lit.css'>
+  <title>TX Killer</title>
+  <script>
+    function gen() {
+      var i1, i2, o;
+      i1 = document.getElementById("i1").value;
+      i2 = document.getElementById("i2").value;
+      if (i1 == "" || i2 == "") {
+        document.getElementById("info").innerHTML = "未输入完整内容！";
+        document.getElementById("o").innerHTML = "";
+        return;
+      }
+      o = "请以资深英语写作教师+专业AI批改专家的身份，全面、精准批改我的英语作文，覆盖完整批改维度，反馈内容需细致且可落地，具体要求如下：\n一、基础信息填写\n1. 题目/任务要求：" + i1 + "\n2. 作文原文：" + i2 + "\n二、批改反馈维度（需逐一覆盖）\n1. 【整体评分与综合评价】：15分制总分+“任务完成度、语言准确性、表达丰富度、逻辑连贯性、格式规范性”5项分项得分（每项3分）；结合作文类型点评整体适配度、核心优势与不足。\n2. 【精准错误标注与修正】：按“语法、拼写、冠词、介词、代词、句式、标点、词形”8类分类标注错误位置，给出正确表述及错误原因说明。\n3. 【语言表达优化建议】：逐句提供地道替代表达，推荐高级词汇与多样句式，结合体裁调整语言风格，标注优化亮点。\n4. 【逻辑衔接与结构优化】：分析逻辑断层问题，提供适配的衔接词/短语及添加位置，必要时给出句子重组方案。\n5. 【内容要点核查与补充】：逐一核查核心要点覆盖情况（标注“完整/部分/未覆盖”），给出内容细节补充建议及对应语料参考。\n6. 【个性化范文生成】：贴合题目要求与词数限制，融入优化建议，包含至少2处高级句式、3个精准词汇，结构完整规范。\n7. 【出彩表达与改进点总结】：提炼原文亮点并说明优势，按优先级列出改进问题及对应修改方向。\n8. 【错误统计与提分建议】：统计各类错误数量及高频错误类型，给出3-5条可落地的提分技巧。\n三、输出格式要求\n1. 按上述8个维度分模块呈现，标题清晰，条理分明；\n2. 错误标注、优化建议需对应原文具体句子，避免笼统表述；\n3. 专业术语搭配通俗解释，易懂好懂；\n4. 范文单独成段，标注“个性化范文”字样。"
+      document.getElementById("info").innerHTML = "已复制提示词，现在您可以直接打开 DeepSeek 进行粘贴！";
+      document.getElementById("o").innerHTML = o;
+      navigator.clipboard.writeText(o);
+    }
+  </script>
+</head>
+
+<body class='c'>
+  <b><i>TX Killer - AI 作文批改 提示词生成</i></b>
+  <hr>
+  <h5>提示：建议先在网页外完成编辑，再复制粘贴到此处。</h5>
+  <textarea class="card w-100" rows=2 id='i1' style="resize:none;"
+    placeholder='请输入题目/任务要求：完整粘贴题目背景、核心要点、受众、词数限制、格式要求等。'></textarea>
+  <textarea class="card w-100" rows=2 id='i2' style="resize:none;" placeholder='请输入作文原文：完整粘贴作文内容，保留原始格式与标点。'></textarea>
+  <button type="button" class="btn primary" onclick="gen()">确定并复制结果到剪贴板</button>
+  &ensp;<span id="info"></span>
+  <hr>
+  <textarea class="card w-100" readonly rows=3 id='o' style="resize:none;" placeholder='结果将显示在此处。'></textarea>
+</body>
+
+</html>
