@@ -1,0 +1,53 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset='utf-8'>
+  <meta name='viewport' content='width=device-width,initial-scale=1'>
+  <link rel="stylesheet" href="https://fonts.googleapis.cn/css?family=Nunito:,i,b">
+  <link rel='stylesheet' href='./lit.css'>
+  <title>抽奖工具</title>
+  <script>
+    let arr = [];
+    function next() {
+      let t = document.getElementById("i").value.split(",");
+      t.forEach(item => { if (item != "" && !arr.includes(item)) arr.push(item); });
+      document.getElementById("i").value = arr.join(",");
+      document.getElementById("i").readOnly = true;
+      document.getElementById("i").rows = 2;
+      document.getElementById("tip").innerHTML = "已去除重复选项，共有 <b>" + arr.length + "</b> 个选项";
+      document.getElementById("d1").style = "display: none;";
+      document.getElementById("d2").style = "display: inline;";
+    }
+    function countdown(cnt) {
+      if (cnt == 0) {
+        document.getElementById("cd").innerHTML = arr[Math.floor(Math.random() * arr.length)];
+        return;
+      }
+      document.getElementById("cd").innerHTML = cnt;
+      setTimeout(() => countdown(cnt - 1), 1000);
+    }
+    function go() {
+      document.getElementById("d3").style = "display: inline;";
+      countdown(5);
+    }
+  </script>
+</head>
+
+<body class='c'>
+  <i><b>抽奖工具</b></i>
+  <hr>
+  <div style="text-align: center;">
+    <textarea class="card w-100" rows=8 id='i' style="resize: none;" placeholder='请输入'></textarea>
+    <button id="d1" class="btn primary w-100" type='button' onclick="next()">下一步</button>
+    <div id="d2" style="display: none;">
+      <span id="tip">aaa</span><br>
+      <button class="btn primary w-100" type='button' onclick='go()'>开始抽奖</button>
+    </div>
+    <div id="d3" style="display: none;">
+      <h1 id="cd"></h1>
+    </div>
+  </div>
+</body>
+
+</html>
