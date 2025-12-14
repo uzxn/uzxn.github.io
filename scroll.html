@@ -4,6 +4,7 @@
 <head>
   <meta charset='utf-8'>
   <meta name='viewport' content='width=device-width,initial-scale=1'>
+  <script src="download.min.js"></script>
   <link rel="stylesheet" href="https://fonts.googleapis.cn/css?family=Nunito:,i,b">
   <link rel='stylesheet' href='./lit.css'>
   <title>Note 间隔归一化</title>
@@ -12,14 +13,20 @@
 <body class='c'>
   <i><b>Note 间隔归一化</b></i>
   <hr>
-  流速倍率（数值越大流速越快）：<input class="card" id="k" value=0.2 placeholder="默认值为 0.2"><br>
-  <input class="card w-100" type="file" id="i" accept=".mc" title="input file">
-  <a id='d' style="display:none;">
-    <button type="button" class="btn primary w-100">立即下载！</button>
-  </a>
-  <textarea class="card w-100" rows=30 id='o' style="resize:none;" placeholder='结果预览'></textarea>
+  <label for="k">流速倍率（数值越大流速越快）：</label>
+  <input id="k" class="card w-100" value=0.2 placeholder="默认值为 0.2" name="k">
+  <label for="input_file">请选择 .mc 谱面文件：</label>
+  <input id="i" class="card w-100" type="file" accept=".mc" name="input_file">
+  <label for="version">修改后的难度名（version）：</label>
+  <input id="n" class="card w-100" name="version" readonly>
+  <button id='d' style="display:none;" type="button" class="btn primary w-100" onclick="dl()">立即下载！</button>
+  <textarea class="card w-100" rows=40 id='o' style="resize:none;" readonly placeholder='修改后的文件预览'></textarea>
   <script defer>
-    let input = document.getElementById("i");
+    let input = document.getElementById("i"), res = "(none)";
+    function dl() {
+      if (res == "(none)") return;
+      download(new Blob([res]), "ScrollEdit_" + input.files[0].name, "text/plain");
+    }
     input.addEventListener("change", function gen() {
       let reader = new FileReader();
       reader.readAsText(input.files[0], "UTF-8");
@@ -44,11 +51,9 @@
           if (obj.effect.length >= 1 && Math.abs(k - obj.effect.at(-1).scroll * m) <= Number.EPSILON) continue;
           obj.effect.push({ beat: [a, b, c], scroll: k / m });
         }
-        document.getElementById("o").innerHTML = JSON.stringify(obj);
-        let file = new File([JSON.stringify(obj)], "ScrollEdit_" + input.files[0].name, { type: "text/plain" });
-        let url = URL.createObjectURL(file);
-        document.getElementById("d").href = url;
-        document.getElementById("d").download = file.name;
+        res = JSON.stringify(obj);
+        document.getElementById("o").innerHTML = res;
+        document.getElementById("n").value = obj.meta.version;
         document.getElementById("d").style = "display:inline;";
       }
     });
