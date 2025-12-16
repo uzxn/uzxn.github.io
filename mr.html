@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset='utf-8'>
+  <meta name='viewport' content='width=device-width,initial-scale=1'>
+  <link rel="stylesheet" href="https://fonts.googleapis.cn/css?family=Nunito:,i,b">
+  <link rel='stylesheet' href='./lit.css'>
+  <title>Malody 4.3.7 回放信息查看</title>
+</head>
+
+<body class='c'>
+  <i><b>Malody 4.3.7 回放信息查看</b></i>
+  <hr>
+  <label for="input_file">请选择 .mr 回放文件：</label>
+  <input id="i" class="card w-100" type="file" accept=".mr" name="input_file">
+  <textarea id='o' class="card w-100" rows=20 style="resize:none;" readonly placeholder='详细信息预览'></textarea>
+  <div style="text-align:center;">
+    <a href="https://github.com/uzxn/MalodyReplayChecker">Windows 离线版本，支持批量重命名、导出至 Excel</a>
+  </div>
+  <script defer>
+    // "use strict";
+    function readInt(e, t) { return { value: e.getInt32(t, !0), offset: t + 4 } } function readByte(e, t) { return { value: e.getUint8(t), offset: t + 1 } } function readString(e, t) { const o = readInt(e, t), a = o.value; t = o.offset; const f = new TextDecoder("utf-8"), s = new Uint8Array(e.buffer, t, a); return { value: f.decode(s), offset: t + a } } function parseMalodyReplay(e) { const t = new DataView(e); let o = 0; const a = { ver: [0, 0, 0], md5: "", diff: "", song: "", author: "", score: 0, combo: 0, best: 0, cool: 0, good: 0, miss: 0, mods: 0, judge: "", hit: 0, time: { year: 0, month: 0, date: 0, hour: 0, minute: 0, second: 0 }, acc: 0 }; o = readString(t, o).offset; let f = readByte(t, o); a.ver[2] = f.value, o = f.offset, f = readByte(t, o), a.ver[1] = f.value, o = f.offset, f = readByte(t, o), a.ver[0] = f.value, o = f.offset, f = readByte(t, o), o = f.offset; const s = readString(t, o); a.md5 = s.value, o = s.offset; const r = readString(t, o); a.diff = r.value, o = r.offset; const n = readString(t, o); a.song = n.value, o = n.offset; const d = readString(t, o); let u; a.author = d.value, o = d.offset, u = readInt(t, o), a.score = u.value, o = u.offset, u = readInt(t, o), a.combo = u.value, o = u.offset, u = readInt(t, o), a.best = u.value, o = u.offset, u = readInt(t, o), a.cool = u.value, o = u.offset, u = readInt(t, o), a.good = u.value, o = u.offset, u = readInt(t, o), a.miss = u.value, o = u.offset, u = readInt(t, o), o = u.offset, u = readInt(t, o), a.mods = u.value, o = u.offset, u = readInt(t, o); const c = u.value; a.judge = "ABCDE"[c], o = u.offset; o = readString(t, o).offset; for (let e = 0; e < 4; e++)f = readByte(t, o), o = f.offset; u = readInt(t, o), a.hit = u.value, o = u.offset, f = readByte(t, o), o = f.offset, u = readInt(t, o); const l = 1e3 * u.value; o = u.offset; const i = new Date(l); return a.time.year = i.getFullYear(), a.time.month = i.getMonth() + 1, a.time.date = i.getDate(), a.time.hour = i.getHours(), a.time.minute = i.getMinutes(), a.time.second = i.getSeconds(), a.best + a.cool + a.good + a.miss > 0 ? a.acc = (100 * a.best + 75 * a.cool + 40 * a.good) / (a.best + a.cool + a.good + a.miss) : a.acc = 0, a }
+
+    function getBit(t, o) { return t >> o & 1 } function formatMalodyReplay(t) { let o = ""; o += `Song Name    | ${t.song}\n`, o += `Song Author  | ${t.author}\n`, o += `Difficulty   | ${t.diff}\n`, o += `Score        | ${t.score}\n`, o += `Accuracy     | ${t.acc.toFixed(4)}%\n`, o += `Judgement    | ${t.judge}\n`, o += `Max Combo    | ${t.combo}\n`, o += `Best         | ${t.best}\n`, o += `Cool         | ${t.cool}\n`, o += `Good         | ${t.good}\n`, o += `Miss         | ${t.miss}\n`, o += `Total Hit    | ${t.hit}\n`, o += "Mods         | "; const e = []; return getBit(t.mods, 0) && e.push("Fair"), getBit(t.mods, 1) && e.push("Luck"), getBit(t.mods, 2) && e.push("Flip"), getBit(t.mods, 3) && e.push("Const"), getBit(t.mods, 4) && e.push("Dash"), getBit(t.mods, 5) && e.push("Rush"), getBit(t.mods, 6) && e.push("Hide"), getBit(t.mods, 7) && e.push("Origin"), getBit(t.mods, 8) && e.push("Slow"), getBit(t.mods, 9) && e.push("Death"), o += e.join(" "), o += "\n", o += `Chart MD5    | ${t.md5}\n`, o += `Time         | ${t.time.year.toString().padStart(4, "0")}-${t.time.month.toString().padStart(2, "0")}-${t.time.date.toString().padStart(2, "0")} ${t.time.hour.toString().padStart(2, "0")}:${t.time.minute.toString().padStart(2, "0")}:${t.time.second.toString().padStart(2, "0")}\n`, o += `Malody Ver   | ${t.ver[0]}.${t.ver[1]}.${t.ver[2]}`, o }
+
+    let res = "(none)";
+    const input = document.getElementById("i");
+    input.addEventListener("change", function () {
+      const reader = new FileReader();
+      reader.readAsArrayBuffer(input.files[0]);
+      reader.onload = cb;
+    });
+    function cb(event) {
+      let obj = parseMalodyReplay(event.target.result);
+      document.getElementById("o").innerHTML = formatMalodyReplay(obj);
+    }
+  </script>
+</body>
+
+</html>

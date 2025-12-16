@@ -7,11 +7,11 @@
   <script src="download.min.js"></script>
   <link rel="stylesheet" href="https://fonts.googleapis.cn/css?family=Nunito:,i,b">
   <link rel='stylesheet' href='./lit.css'>
-  <title>Note 间隔归一化</title>
+  <title>Malody 谱面 Note 间隔归一化 - ScrollEdit</title>
 </head>
 
 <body class='c'>
-  <i><b>Note 间隔归一化</b></i>
+  <i><b>Malody 谱面 Note 间隔归一化 - ScrollEdit</b></i>
   <hr>
   <label for="k">流速倍率（数值越大流速越快）：</label>
   <input id="k" class="card w-100" value=0.2 placeholder="默认值为 0.2" name="k">
@@ -20,43 +20,46 @@
   <label for="version">修改后的难度名（version）：</label>
   <input id="n" class="card w-100" name="version" readonly>
   <button id='d' style="display:none;" type="button" class="btn primary w-100" onclick="dl()">立即下载！</button>
-  <textarea class="card w-100" rows=30 id='o' style="resize:none;" readonly placeholder='修改后的文件预览'></textarea>
+  <textarea id='o' class="card w-100" rows=30 style="resize:none;" readonly placeholder='修改后的文件预览'></textarea>
   <script defer>
-    let input = document.getElementById("i"), res = "(none)";
+    // "use strict";
+    let res = "(none)";
+    const input = document.getElementById("i");
+    input.addEventListener("change", function () {
+      const reader = new FileReader();
+      reader.readAsText(input.files[0], "UTF-8");
+      reader.onload = cb;
+    });
+    function cb(event) {
+      let k = Number(document.getElementById("k").value);
+      if (k <= 0) {
+        k = 0.2;
+        document.getElementById("k").value = k;
+      }
+      let obj = JSON.parse(event.target.result);
+      obj.meta.version = "ScrollEdit_" + obj.meta.version;
+      obj.effect = [];
+      for (let i = 0; i < obj.note.length - 1; i++) {
+        const a = obj.note[i].beat[0], b = obj.note[i].beat[1], c = obj.note[i].beat[2];
+        if (i == obj.note.length - 2) {
+          obj.effect.push({ beat: [a, b, c], scroll: k });
+          continue;
+        }
+        const d = obj.note[i + 1].beat[0], e = obj.note[i + 1].beat[1], f = obj.note[i + 1].beat[2];
+        const m = (c * d * f + c * e - a * c * f - b * f) / f / c;
+        if (m == 0) continue;
+        if (obj.effect.length >= 1 && Math.abs(k - obj.effect.at(-1).scroll * m) <= Number.EPSILON) continue;
+        obj.effect.push({ beat: [a, b, c], scroll: k / m });
+      }
+      res = JSON.stringify(obj);
+      document.getElementById("o").innerHTML = res;
+      document.getElementById("n").value = obj.meta.version;
+      document.getElementById("d").style = "display:inline;";
+    }
     function dl() {
       if (res == "(none)") return;
       download(new Blob([res]), "ScrollEdit_" + input.files[0].name, "text/plain");
     }
-    input.addEventListener("change", function gen() {
-      let reader = new FileReader();
-      reader.readAsText(input.files[0], "UTF-8");
-      reader.onload = function (e) {
-        let k = Number(document.getElementById("k").value);
-        if (k <= 0) {
-          k = 0.2;
-          document.getElementById("k").value = k;
-        }
-        let obj = JSON.parse(e.target.result);
-        obj.meta.version = "ScrollEdit_" + obj.meta.version;
-        obj.effect = [];
-        for (let i = 0; i < obj.note.length - 1; i++) {
-          let a = obj.note[i].beat[0], b = obj.note[i].beat[1], c = obj.note[i].beat[2];
-          if (i == obj.note.length - 2) {
-            obj.effect.push({ beat: [a, b, c], scroll: k });
-            continue;
-          }
-          let d = obj.note[i + 1].beat[0], e = obj.note[i + 1].beat[1], f = obj.note[i + 1].beat[2];
-          let m = (c * d * f + c * e - a * c * f - b * f) / f / c;
-          if (m == 0) continue;
-          if (obj.effect.length >= 1 && Math.abs(k - obj.effect.at(-1).scroll * m) <= Number.EPSILON) continue;
-          obj.effect.push({ beat: [a, b, c], scroll: k / m });
-        }
-        res = JSON.stringify(obj);
-        document.getElementById("o").innerHTML = res;
-        document.getElementById("n").value = obj.meta.version;
-        document.getElementById("d").style = "display:inline;";
-      }
-    });
   </script>
 </body>
 

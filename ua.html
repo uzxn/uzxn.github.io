@@ -10,11 +10,11 @@
 </head>
 
 <body class='c'>
-  <b><i>User Agent</i></b>
+  <b><i>当前浏览器 UA</i></b>
   <hr>
-  <h5>当前浏览器 UA</h5>
-  <div id='ua'></div>
-  <script>document.getElementById("ua").innerHTML = navigator.userAgent;</script>
+  <textarea id='o' class="card w-100" rows=5 style="resize:none;" readonly></textarea>
+  <button class="btn primary w-100" type='button' onclick='copy()'>复制到剪贴板</button>
+  <script>document.getElementById("o").value = navigator.userAgent;</script>
 </body>
 
 </html>
