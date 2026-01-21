@@ -1,0 +1,141 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="https://fonts.googleapis.cn/css?family=Nunito:,i,b">
+  <link rel="stylesheet" href="./lit.css">
+  <title>osu!mania 段位单曲物量统计</title>
+</head>
+
+<body class="c">
+  <i><b>osu!mania 段位单曲物量统计</b></i>
+  <hr>
+  <label for="num">段位有多少首歌：</label>
+  <input id="num" class="card w-100" type="number" min="1" max="10" value="4" name="num">
+  <label for="input_file">请选择 .osu 谱面文件：</label>
+  <input id="input_file" class="card w-100" type="file" accept=".osu" name="input_file">
+  <div>
+    物量分析：
+    <div id="selection"></div>
+    <div id="result"></div>
+  </div>
+  <script defer>
+    "use strict";
+    const input = document.getElementById("input_file"),
+      selection = document.getElementById("selection"),
+      result = document.getElementById("result");
+    let totalNoteNum = 0,
+      sortedIntv = [];
+    input.addEventListener("change", function () {
+      const reader = new FileReader();
+      reader.readAsText(input.files[0], "UTF-8");
+      reader.onload = cb;
+    });
+    function findGaps(data) {
+      if (data.length === 0) return [];
+      const sortedData = [...data].sort((a, b) => {
+        if (a.head !== b.head) return a.head - b.head;
+        return a.tail - b.tail;
+      });
+      const mergedIntervals = [];
+      let currentInterval = { ...sortedData[0] };
+      let segmentCount = 1;
+      for (let i = 1; i < sortedData.length; i++) {
+        const segment = sortedData[i];
+        if (segment.head <= currentInterval.tail) {
+          currentInterval.tail = Math.max(currentInterval.tail, segment.tail);
+          segmentCount++;
+        } else {
+          mergedIntervals.push({
+            ...currentInterval,
+            originalCount: segmentCount,
+          });
+          currentInterval = { ...segment };
+          segmentCount = 1;
+        }
+      }
+      mergedIntervals.push({
+        ...currentInterval,
+        originalCount: segmentCount,
+      });
+      const gaps = [];
+      let cumulativeCount = mergedIntervals[0].originalCount;
+      for (let i = 1; i < mergedIntervals.length; i++) {
+        const prev = mergedIntervals[i - 1];
+        const curr = mergedIntervals[i];
+        if (prev.tail < curr.head) {
+          const gapLength = curr.head - prev.tail;
+          gaps.push({
+            cnt: cumulativeCount,
+            intv: gapLength,
+          });
+        }
+        cumulativeCount += curr.originalCount;
+      }
+      return gaps;
+    }
+    function cb(event) {
+      selection.innerHTML = "";
+      result.innerHTML = "";
+      const data = [],
+        lines = event.target.result.split("\n"),
+        num = Number(document.getElementById("num").value);
+      let afterHitObjects = false;
+      totalNoteNum = 0;
+      for (let line of lines) {
+        const trimmedLine = line.trim();
+        if (trimmedLine === "") continue;
+        if (trimmedLine === "[HitObjects]") {
+          afterHitObjects = true;
+          continue;
+        }
+        if (afterHitObjects) {
+          totalNoteNum++;
+          const tokens = trimmedLine.split(":")[0].split(",");
+          const head = Number(tokens[2]);
+          const tail = Number(tokens[3] === "128" ? tokens[5] : tokens[2]);
+          data.push({ head: head, tail: tail });
+        }
+      }
+      sortedIntv = findGaps(data)
+        .sort((a, b) => b.intv - a.intv)
+        .filter((a) => a.intv >= 1000)
+        .slice(0, 10);
+      let str = `总物量：${totalNoteNum}<br>请选择正确的休息时段（当前段位有 ${num} 首歌，默认选择时间最长的前 ${num - 1} 项）：<br>`;
+      for (let i = 0; i < sortedIntv.length; i++) {
+        str += `<label><input type="checkbox" name="selection" value="${i}"`;
+        if (i < num - 1) str += ` checked`;
+        str += `>第 ${sortedIntv[i].cnt} 个物件后的 ${(sortedIntv[i].intv / 1000).toFixed(3)}s 的空白</label><br>`;
+      }
+      str += `<button type="button" class="btn primary" onclick="gen()">确定</button>`;
+      selection.innerHTML = str;
+    }
+    function getSeletedIntv() {
+      const choices = document.getElementsByName("selection");
+      let selectedIntv = [];
+      for (let i = 0; i < choices.length; i++) {
+        if (choices[i].checked == true) selectedIntv.push(sortedIntv[choices[i].value].cnt);
+      }
+      return selectedIntv;
+    }
+    function gen() {
+      const selectedIntv = getSeletedIntv();
+      selectedIntv.push(totalNoteNum);
+      selectedIntv.push(0);
+      selectedIntv.sort((a, b) => a - b);
+      let str = `单曲物量：<br>${selectedIntv[1]}`,
+        text = `<textarea readonly class="card w-100" rows="2" style="resize:none;">num: ${selectedIntv.length - 1}, note: [${selectedIntv[1]}`;
+      for (let i = 2; i < selectedIntv.length; i++) {
+        str += `<br>${selectedIntv[i] - selectedIntv[i - 1]}`;
+        text += `, ${selectedIntv[i] - selectedIntv[i - 1]}`;
+      }
+      str += `<br>`;
+      text += `]</textarea>`;
+      result.innerHTML = str + text;
+    }
+  </script>
+</body>
+
+</html>
