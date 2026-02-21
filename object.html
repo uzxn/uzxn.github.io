@@ -16,17 +16,15 @@
   <input id="num" class="card w-100" type="number" min="1" max="10" value="4" name="num">
   <label for="input_file">请选择 .osu 谱面文件：</label>
   <input id="input_file" class="card w-100" type="file" accept=".osu" name="input_file">
-  <div>
-    物量分析：
-    <div id="selection"></div>
-    <div id="result"></div>
-  </div>
+  <label for="selection">物量和休息时段分析：</label>
+  <div class="card" id="selection">未选择文件</div>
+  <div id="result"></div>
   <script defer>
     "use strict";
     const input = document.getElementById("input_file"),
       selection = document.getElementById("selection"),
       result = document.getElementById("result");
-    let totalNoteNum = 0,
+    let totalNoteNum = 0, totalLNoteNum = 0,
       sortedIntv = [];
     input.addEventListener("change", function () {
       const reader = new FileReader();
@@ -35,44 +33,37 @@
     });
     function findGaps(data) {
       if (data.length === 0) return [];
-      const sortedData = [...data].sort((a, b) => {
-        if (a.head !== b.head) return a.head - b.head;
-        return a.tail - b.tail;
-      });
-      const mergedIntervals = [];
-      let currentInterval = { ...sortedData[0] };
-      let segmentCount = 1;
-      for (let i = 1; i < sortedData.length; i++) {
-        const segment = sortedData[i];
-        if (segment.head <= currentInterval.tail) {
-          currentInterval.tail = Math.max(currentInterval.tail, segment.tail);
-          segmentCount++;
+      const sorted = [...data].sort((a, b) => a.head - b.head || a.tail - b.tail);
+      const merged = [];
+      let current = { ...sorted[0] };
+      let total = 1, totalLN = current.head !== current.tail ? 1 : 0;
+      for (let i = 1; i < sorted.length; i++) {
+        const seg = sorted[i];
+        if (seg.head <= current.tail) {
+          current.tail = Math.max(current.tail, seg.tail);
+          total++;
+          if (seg.head !== seg.tail) totalLN++;
         } else {
-          mergedIntervals.push({
-            ...currentInterval,
-            originalCount: segmentCount,
-          });
-          currentInterval = { ...segment };
-          segmentCount = 1;
+          merged.push({ ...current, total, totalLN });
+          current = { ...seg };
+          total = 1;
+          totalLN = seg.head !== seg.tail ? 1 : 0;
         }
       }
-      mergedIntervals.push({
-        ...currentInterval,
-        originalCount: segmentCount,
-      });
+      merged.push({ ...current, total, totalLN });
       const gaps = [];
-      let cumulativeCount = mergedIntervals[0].originalCount;
-      for (let i = 1; i < mergedIntervals.length; i++) {
-        const prev = mergedIntervals[i - 1];
-        const curr = mergedIntervals[i];
+      let cumTotal = merged[0].total, cumTotalLN = merged[0].totalLN;
+      for (let i = 1; i < merged.length; i++) {
+        const prev = merged[i - 1], curr = merged[i];
         if (prev.tail < curr.head) {
-          const gapLength = curr.head - prev.tail;
           gaps.push({
-            cnt: cumulativeCount,
-            intv: gapLength,
+            cnt: cumTotal,
+            lcnt: cumTotalLN,
+            intv: curr.head - prev.tail
           });
         }
-        cumulativeCount += curr.originalCount;
+        cumTotal += curr.total;
+        cumTotalLN += curr.totalLN;
       }
       return gaps;
     }
@@ -83,7 +74,7 @@
         lines = event.target.result.split("\n"),
         num = Number(document.getElementById("num").value);
       let afterHitObjects = false;
-      totalNoteNum = 0;
+      totalNoteNum = 0, totalLNoteNum = 0;
       for (let line of lines) {
         const trimmedLine = line.trim();
         if (trimmedLine === "") continue;
@@ -92,47 +83,69 @@
           continue;
         }
         if (afterHitObjects) {
-          totalNoteNum++;
           const tokens = trimmedLine.split(":")[0].split(",");
           const head = Number(tokens[2]);
-          const tail = Number(tokens[3] === "128" ? tokens[5] : tokens[2]);
+          const type = Number(tokens[3]);
+          const tmp_tail = Number(tokens[5]);
+          const tail = (type >> 7) & 1 ? tmp_tail : head;
           data.push({ head: head, tail: tail });
+          totalNoteNum++;
+          totalLNoteNum += ((type >> 7) & 1 ? 1 : 0);
         }
       }
       sortedIntv = findGaps(data)
         .sort((a, b) => b.intv - a.intv)
-        .filter((a) => a.intv >= 1000)
-        .slice(0, 10);
+        .filter((a) => a.intv >= 1000);
       let str = `总物量：${totalNoteNum}<br>请选择正确的休息时段（当前段位有 ${num} 首歌，默认选择时间最长的前 ${num - 1} 项）：<br>`;
       for (let i = 0; i < sortedIntv.length; i++) {
         str += `<label><input type="checkbox" name="selection" value="${i}"`;
         if (i < num - 1) str += ` checked`;
         str += `>第 ${sortedIntv[i].cnt} 个物件后的 ${(sortedIntv[i].intv / 1000).toFixed(3)}s 的空白</label><br>`;
       }
-      str += `<button type="button" class="btn primary" onclick="gen()">确定</button>`;
+      str += `<label><input type="checkbox" name="ln" value="ln">显示 LN 物量（仅限 LN 段位）</label>&ensp;<button type="button" class="btn primary" onclick="gen()">确定</button>`;
       selection.innerHTML = str;
     }
     function getSeletedIntv() {
       const choices = document.getElementsByName("selection");
       let selectedIntv = [];
       for (let i = 0; i < choices.length; i++) {
-        if (choices[i].checked == true) selectedIntv.push(sortedIntv[choices[i].value].cnt);
+        if (choices[i].checked == true) selectedIntv.push({
+          cnt: sortedIntv[choices[i].value].cnt,
+          lcnt: sortedIntv[choices[i].value].lcnt
+        });
       }
       return selectedIntv;
     }
     function gen() {
       const selectedIntv = getSeletedIntv();
-      selectedIntv.push(totalNoteNum);
-      selectedIntv.push(0);
-      selectedIntv.sort((a, b) => a - b);
-      let str = `单曲物量：<br>${selectedIntv[1]}`,
-        text = `<textarea readonly class="card w-100" rows="2" style="resize:none;">num: ${selectedIntv.length - 1}, note: [${selectedIntv[1]}`;
-      for (let i = 2; i < selectedIntv.length; i++) {
-        str += `<br>${selectedIntv[i] - selectedIntv[i - 1]}`;
-        text += `, ${selectedIntv[i] - selectedIntv[i - 1]}`;
+      selectedIntv.push({ cnt: totalNoteNum, lcnt: totalLNoteNum });
+      selectedIntv.push({ cnt: 0, lcnt: 0 });
+      selectedIntv.sort((a, b) => a.cnt - b.cnt);
+      let str = "(none)", text = "(none)";
+      const isLN = document.getElementsByName("ln")[0].checked;
+      if (isLN) {
+        str = `单曲物量：<br><pre>${selectedIntv[1].cnt} (其中 LN ${selectedIntv[1].lcnt})`;
+        text = `<textarea id="jscode" readonly class="card w-100" rows="2" style="resize:none;">num: ${selectedIntv.length - 1}, note: [${selectedIntv[1].cnt}`;
+        for (let i = 2; i < selectedIntv.length; i++) {
+          str += `\n${selectedIntv[i].cnt - selectedIntv[i - 1].cnt} (其中 LN ${selectedIntv[i].lcnt - selectedIntv[i - 1].lcnt})`;
+          text += `, ${selectedIntv[i].cnt - selectedIntv[i - 1].cnt}`;
+        }
+        str += `</pre>`;
+        text += `], lnote: [${selectedIntv[1].lcnt}`;
+        for (let i = 2; i < selectedIntv.length; i++) {
+          text += `, ${selectedIntv[i].lcnt - selectedIntv[i - 1].lcnt}`;
+        }
+        text += `]</textarea>`;
+      } else {
+        str = `单曲物量：<br><pre>${selectedIntv[1].cnt}`;
+        text = `<textarea id="jscode" readonly class="card w-100" rows="2" style="resize:none;">num: ${selectedIntv.length - 1}, note: [${selectedIntv[1].cnt}`;
+        for (let i = 2; i < selectedIntv.length; i++) {
+          str += `\n${selectedIntv[i].cnt - selectedIntv[i - 1].cnt}`;
+          text += `, ${selectedIntv[i].cnt - selectedIntv[i - 1].cnt}`;
+        }
+        str += `</pre>`;
+        text += `]</textarea>`;
       }
-      str += `<br>`;
-      text += `]</textarea>`;
       result.innerHTML = str + text;
     }
   </script>
