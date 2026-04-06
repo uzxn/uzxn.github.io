@@ -25,12 +25,13 @@
 </head>
 
 <body>
-  <span>Gilbert 批量图片加解密</span>
+  <span>Gilbert 批量图片加解密 - 支持图片和 ZIP 图包格式</span>
   <hr>
   <input type="file" id="fileInput" multiple accept="image/*,.zip">
   <br>
   <button id="encryptBtn">加密全部</button>
   <button id="decryptBtn">解密全部</button>
+  <button id="downloadCurrentBtn">下载当前图片</button>
   <button id="downloadBtn">下载全部 (ZIP)</button>
   <br>
   <button id="prevBtn">◀ 上一张</button>
@@ -284,6 +285,16 @@
         document.getElementById('status').innerText = `解密完成，共 ${images.length} 张`;
       }
 
+      // 下载当前预览的图片（单张）
+      async function downloadCurrent() {
+        if (images.length === 0) { alert('没有可下载的图片'); return; }
+        const img = images[currentIndex];
+        const blob = await imageDataToBlob(img.currentData);
+        // 使用 download.js 下载，文件名已包含 .png
+        download(blob, img.name, 'image/png');
+        document.getElementById('status').innerText = `下载已开始：${img.name}`;
+      }
+
       // 打包下载所有当前图片为 ZIP（使用 download.js）
       async function downloadAll() {
         if (images.length === 0) { alert('没有可下载的图片'); return; }
@@ -297,7 +308,7 @@
           statusDiv.innerText = `打包中：${i + 1}/${images.length}`;
         }
         const content = await zip.generateAsync({ type: 'blob' });
-        download(content, 'gilbert_images.zip', 'application/zip');
+        download(content, images[0].name + ` 等 ${images.length} 张图片.zip`, 'application/zip');
         statusDiv.innerText = `下载已开始（共 ${images.length} 张）`;
       }
 
@@ -319,6 +330,7 @@
       });
       document.getElementById('encryptBtn').addEventListener('click', encryptAll);
       document.getElementById('decryptBtn').addEventListener('click', decryptAll);
+      document.getElementById('downloadCurrentBtn').addEventListener('click', downloadCurrent);
       document.getElementById('downloadBtn').addEventListener('click', downloadAll);
       document.getElementById('prevBtn').addEventListener('click', prevImage);
       document.getElementById('nextBtn').addEventListener('click', nextImage);
