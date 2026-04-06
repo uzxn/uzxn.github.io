@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/downloadjs/download.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip/dist/jszip.min.js"></script>
+  <title>Gilbert 批量图片加解密</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    *+* {
+      margin: .4rem 0;
+    }
+
+    body {
+      max-width: 40rem;
+      padding: 1rem;
+      margin: auto;
+    }
+  </style>
+</head>
+
+<body>
+  <span>Gilbert 批量图片加解密</span>
+  <hr>
+  <input type="file" id="fileInput" multiple accept="image/*,.zip">
+  <br>
+  <button id="encryptBtn">加密全部</button>
+  <button id="decryptBtn">解密全部</button>
+  <button id="downloadBtn">下载全部 (ZIP)</button>
+  <br>
+  <button id="prevBtn">◀ 上一张</button>
+  <button id="nextBtn">下一张 ▶</button>
+  <span id="counter"></span>
+  <br>
+  <span id="status">未选择图片</span>
+  <br>
+  <canvas id="previewCanvas" style="max-height:20rem; max-width:100%; border:1px solid #ccc;"></canvas>
+  <hr>
+
+  <script>
+    (function () {
+      let images = [];           // 存储所有图片数据
+      let currentIndex = 0;
+      const previewCanvas = document.getElementById('previewCanvas');
+      const ctx = previewCanvas.getContext('2d');
+
+      // ---------- 吉尔伯特曲线生成 ----------
+      function gilbert2d(width, height) {
+        const coords = [];
+        if (width >= height) {
+          generate(0, 0, width, 0, 0, height, coords);
+        } else {
+          generate(0, 0, 0, height, width, 0, coords);
+        }
+        return coords;
+      }
+
+      function generate(x, y, ax, ay, bx, by, coords) {
+        const w = Math.abs(ax + ay);
+        const h = Math.abs(bx + by);
+        const dax = Math.sign(ax), day = Math.sign(ay);
+        const dbx = Math.sign(bx), dby = Math.sign(by);
+
+        if (h === 1) {
+          for (let i = 0; i < w; i++) {
+            coords.push([x, y]);
+            x += dax; y += day;
+          }
+          return;
+        }
+        if (w === 1) {
+          for (let i = 0; i < h; i++) {
+            coords.push([x, y]);
+            x += dbx; y += dby;
+          }
+          return;
+        }
+
+        let ax2 = Math.floor(ax / 2), ay2 = Math.floor(ay / 2);
+        let bx2 = Math.floor(bx / 2), by2 = Math.floor(by / 2);
+        const w2 = Math.abs(ax2 + ay2);
+        const h2 = Math.abs(bx2 + by2);
+
+        if (2 * w > 3 * h) {
+          if ((w2 % 2) !== 0 && w > 2) {
+            ax2 += dax; ay2 += day;
+          }
+          generate(x, y, ax2, ay2, bx, by, coords);
+          generate(x + ax2, y + ay2, ax - ax2, ay - ay2, bx, by, coords);
+        } else {
+          if ((h2 % 2) !== 0 && h > 2) {
+            bx2 += dbx; by2 += dby;
+          }
+          generate(x, y, bx2, by2, ax2, ay2, coords);
+          generate(x + bx2, y + by2, ax, ay, bx - bx2, by - by2, coords);
+          generate(x + (ax - dax) + (bx2 - dbx), y + (ay - day) + (by2 - dby),
+            -bx2, -by2, -(ax - ax2), -(ay - ay2), coords);
+        }
+      }
+
+      // 构建加密映射表
+      function buildEncryptMap(width, height, offset) {
+        const total = width * height;
+        const curve = gilbert2d(width, height);
+        const linearCurve = new Uint32Array(total);
+        for (let i = 0; i < total; i++) {
+          linearCurve[i] = curve[i][1] * width + curve[i][0];
+        }
+        const encMap = new Uint32Array(total);
+        for (let i = 0; i < total; i++) {
+          const srcIdx = linearCurve[(i + offset) % total];
+          encMap[linearCurve[i]] = srcIdx;
+        }
+        return encMap;
+      }
+
+      // 求逆映射
+      function invertMap(encMap, total) {
+        const inv = new Uint32Array(total);
+        for (let i = 0; i < total; i++) {
+          inv[encMap[i]] = i;
+        }
+        return inv;
+      }
+
+      // 应用映射表重排图像数据
+      function permuteImageData(imageData, map) {
+        const width = imageData.width;
+        const height = imageData.height;
+        const total = width * height;
+        const src = imageData.data;
+        const dst = new Uint8ClampedArray(src.length);
+        for (let dstIdx = 0; dstIdx < total; dstIdx++) {
+          const srcIdx = map[dstIdx];
+          dst[dstIdx * 4] = src[srcIdx * 4];
+          dst[dstIdx * 4 + 1] = src[srcIdx * 4 + 1];
+          dst[dstIdx * 4 + 2] = src[srcIdx * 4 + 2];
+          dst[dstIdx * 4 + 3] = src[srcIdx * 4 + 3];
+        }
+        return new ImageData(dst, width, height);
+      }
+
+      // 将 ImageData 绘制到 canvas
+      function drawImageDataToCanvas(imageData) {
+        previewCanvas.width = imageData.width;
+        previewCanvas.height = imageData.height;
+        ctx.putImageData(imageData, 0, 0);
+      }
+
+      // 将 ImageData 转为 PNG Blob
+      function imageDataToBlob(imageData) {
+        return new Promise((resolve) => {
+          const canvas = document.createElement('canvas');
+          canvas.width = imageData.width;
+          canvas.height = imageData.height;
+          const ctx = canvas.getContext('2d');
+          ctx.putImageData(imageData, 0, 0);
+          canvas.toBlob(resolve, 'image/png');
+        });
+      }
+
+      // 刷新预览
+      function refreshPreview() {
+        if (images.length === 0) {
+          previewCanvas.width = 0;
+          previewCanvas.height = 0;
+          document.getElementById('counter').innerText = '0 / 0';
+          return;
+        }
+        const img = images[currentIndex];
+        drawImageDataToCanvas(img.currentData);
+        document.getElementById('counter').innerText = `${currentIndex + 1}/${images.length} - ${img.name}`;
+      }
+
+      // 从 Blob 加载单张图片，生成图像数据和映射表
+      async function loadSingleImageFromBlob(blob, originalName) {
+        const bitmap = await createImageBitmap(blob);
+        const width = bitmap.width, height = bitmap.height;
+        const canvas = new OffscreenCanvas(width, height);
+        const ctxOff = canvas.getContext('2d');
+        ctxOff.drawImage(bitmap, 0, 0);
+        const imageData = ctxOff.getImageData(0, 0, width, height);
+        bitmap.close();
+
+        const totalPixels = width * height;
+        const offset = Math.floor((Math.sqrt(5) - 1) / 2 * totalPixels);
+        const encMap = buildEncryptMap(width, height, offset);
+        const decMap = invertMap(encMap, totalPixels);
+
+        // 输出文件名：去除原扩展名，加上 .png
+        const baseName = originalName.replace(/\.[^/.]+$/, '');
+        const outName = baseName + '.png';
+
+        return {
+          name: outName,
+          width, height,
+          originalData: imageData,
+          currentData: imageData,
+          encMap, decMap
+        };
+      }
+
+      // 判断是否为图片文件（扩展名）
+      function isImageFile(filename) {
+        const ext = filename.split('.').pop().toLowerCase();
+        return ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'].includes(ext);
+      }
+
+      // 从 ZIP 文件中提取所有图片，返回图片数据数组
+      async function loadImagesFromZip(zipFile, statusDiv) {
+        const zip = await JSZip.loadAsync(zipFile);
+        const imageEntries = [];
+        // 遍历所有条目，收集图片文件
+        zip.forEach((relativePath, entry) => {
+          if (!entry.dir && isImageFile(entry.name)) {
+            imageEntries.push(entry);
+          }
+        });
+        const imagesFromZip = [];
+        for (let i = 0; i < imageEntries.length; i++) {
+          const entry = imageEntries[i];
+          statusDiv.innerText = `解压 ZIP 中：${i + 1}/${imageEntries.length} - ${entry.name}`;
+          const blob = await entry.async('blob');
+          // 使用文件名（不含路径）作为显示名
+          const displayName = entry.name.split('/').pop();
+          const imgData = await loadSingleImageFromBlob(blob, displayName);
+          imagesFromZip.push(imgData);
+        }
+        return imagesFromZip;
+      }
+
+      // 加载多个文件（支持图片和 ZIP 混合）
+      async function loadImages(files) {
+        images = [];
+        const statusDiv = document.getElementById('status');
+        statusDiv.innerText = `加载中… 共 ${files.length} 项`;
+
+        let allImageItems = []; // 存储 Promise 或直接数据
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const isZip = file.name.toLowerCase().endsWith('.zip');
+          if (isZip) {
+            statusDiv.innerText = `正在解压 ZIP：${file.name} …`;
+            const zipImages = await loadImagesFromZip(file, statusDiv);
+            allImageItems.push(...zipImages);
+          } else if (isImageFile(file.name)) {
+            statusDiv.innerText = `加载图片：${file.name}`;
+            const imgData = await loadSingleImageFromBlob(file, file.name);
+            allImageItems.push(imgData);
+          } else {
+            statusDiv.innerText = `跳过非图片非 ZIP 文件：${file.name}`;
+          }
+        }
+        images = allImageItems;
+        currentIndex = images.length > 0 ? 0 : 0;
+        refreshPreview();
+        statusDiv.innerText = `加载完成，共 ${images.length} 张图片`;
+      }
+
+      // 加密所有图片
+      async function encryptAll() {
+        if (images.length === 0) { alert('请先选择图片或 ZIP 文件'); return; }
+        for (let i = 0; i < images.length; i++) {
+          document.getElementById('status').innerText = `加密中：${i + 1}/${images.length}`;
+          images[i].currentData = permuteImageData(images[i].currentData, images[i].encMap);
+        }
+        refreshPreview();
+        document.getElementById('status').innerText = `加密完成，共 ${images.length} 张`;
+      }
+
+      // 解密所有图片
+      async function decryptAll() {
+        if (images.length === 0) { alert('请先选择图片或 ZIP 文件'); return; }
+        for (let i = 0; i < images.length; i++) {
+          document.getElementById('status').innerText = `解密中：${i + 1}/${images.length}`;
+          images[i].currentData = permuteImageData(images[i].currentData, images[i].decMap);
+        }
+        refreshPreview();
+        document.getElementById('status').innerText = `解密完成，共 ${images.length} 张`;
+      }
+
+      // 打包下载所有当前图片为 ZIP（使用 download.js）
+      async function downloadAll() {
+        if (images.length === 0) { alert('没有可下载的图片'); return; }
+        const zip = new JSZip();
+        const statusDiv = document.getElementById('status');
+        statusDiv.innerText = '正在生成 ZIP，请稍候…';
+        for (let i = 0; i < images.length; i++) {
+          const img = images[i];
+          const blob = await imageDataToBlob(img.currentData);
+          zip.file(img.name, blob);
+          statusDiv.innerText = `打包中：${i + 1}/${images.length}`;
+        }
+        const content = await zip.generateAsync({ type: 'blob' });
+        download(content, 'gilbert_images.zip', 'application/zip');
+        statusDiv.innerText = `下载已开始（共 ${images.length} 张）`;
+      }
+
+      // 切换图片
+      function prevImage() {
+        if (images.length === 0) return;
+        currentIndex = (currentIndex - 1 + images.length) % images.length;
+        refreshPreview();
+      }
+      function nextImage() {
+        if (images.length === 0) return;
+        currentIndex = (currentIndex + 1) % images.length;
+        refreshPreview();
+      }
+
+      // 绑定事件
+      document.getElementById('fileInput').addEventListener('change', (e) => {
+        if (e.target.files.length) loadImages(Array.from(e.target.files));
+      });
+      document.getElementById('encryptBtn').addEventListener('click', encryptAll);
+      document.getElementById('decryptBtn').addEventListener('click', decryptAll);
+      document.getElementById('downloadBtn').addEventListener('click', downloadAll);
+      document.getElementById('prevBtn').addEventListener('click', prevImage);
+      document.getElementById('nextBtn').addEventListener('click', nextImage);
+    })();
+  </script>
+</body>
+
+</html>
