@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes">
+  <title>ComicReader</title>
+  <style>
+    * {
+      margin: .4rem 0;
+    }
+
+    body {
+      max-width: 40rem;
+      padding: .8rem;
+      margin: auto;
+    }
+
+    img {
+      max-width: 100%;
+      max-height: 80vh;
+      border: 1px solid #999;
+    }
+  </style>
+</head>
+
+<body>
+  <span>ComicReader - 键盘左右键可快速翻页</span>
+  <hr>
+  <input id="id" placeholder="请输入漫画 ID">
+  <button id="loadBtn">开始阅读</button>
+  <br>
+  <button id="prevBtn">◀ 上一页</button>
+  <button id="nextBtn">下一页 ▶</button>
+  <span id="page">-</span>
+  <hr>
+  <div id="img"></div>
+
+  <script>
+    var idInput = document.getElementById('id');
+    var loadBtn = document.getElementById('loadBtn');
+    var prevBtn = document.getElementById('prevBtn');
+    var nextBtn = document.getElementById('nextBtn');
+    var pageSpan = document.getElementById('page');
+    var imgDiv = document.getElementById('img');
+
+    var base = '', cur = 0, max = 0, cache = {};
+
+    function url(p) { return base + ('0000' + p).slice(-5) + '.webp'; }
+
+    function updateUI() {
+      pageSpan.innerText = max ? cur + '/' + max : (cur || '-');
+      prevBtn.disabled = (cur <= 1);
+      nextBtn.disabled = (max > 0 && cur >= max);
+    }
+
+    function show(p) {
+      if (p < 1 || (max && p > max)) return;
+      if (cache[p] && cache[p].img) {
+        imgDiv.innerHTML = '';
+        imgDiv.appendChild(cache[p].img);
+        cur = p;
+        updateUI();
+        return;
+      }
+      if (cache[p] && cache[p].loading) return;
+
+      cache[p] = { loading: true };
+      pageSpan.innerText = '加载中';
+      var img = new Image();
+      console.log(url(p));
+      img.onload = function () {
+        img.alt = url(p);
+        cache[p] = { img: img };
+        imgDiv.innerHTML = '';
+        imgDiv.appendChild(img);
+        cur = p;
+        updateUI();
+      };
+      img.onerror = function () {
+        if (p === 1) imgDiv.innerText = '加载失败';
+        else if (max === 0) max = p - 1;
+        delete cache[p];
+        updateUI();
+      };
+      img.src = url(p);
+    }
+
+    function load() {
+      var id = idInput.value.trim();
+      if (!id) { alert('漫画 ID 不可为空！'); return; }
+      base = 'https://cdn-msp3.jm18c-oec.cc/media/photos/' + id + '/';
+      cache = {};
+      cur = max = 0;
+      imgDiv.innerHTML = '';
+      updateUI();
+      show(1);
+    }
+
+    function next() { if (cur) show(cur + 1); }
+    function prev() { if (cur > 1) show(cur - 1); }
+
+    loadBtn.onclick = load;
+    prevBtn.onclick = prev;
+    nextBtn.onclick = next;
+    idInput.onkeydown = function (e) { if (e.key === 'Enter') load(); };
+    window.onkeydown = function (e) {
+      if (e.key === 'ArrowLeft') prev();
+      else if (e.key === 'ArrowRight') next();
+    };
+  </script>
+</body>
+
+</html>
