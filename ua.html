@@ -3,18 +3,37 @@
 
 <head>
   <meta charset='utf-8'>
-  <meta name='viewport' content='width=device-width,initial-scale=1'>
-  <link rel="stylesheet" href="https://fonts.googleapis.cn/css?family=Nunito:,i,b">
-  <link rel='stylesheet' href='./lit.css'>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes">
+  <style>
+    * {
+      margin: .4rem 0;
+    }
+
+    body {
+      max-width: 40rem;
+      padding: .8rem;
+      margin: auto;
+    }
+
+    textarea {
+      width: 90%;
+      resize: none;
+    }
+  </style>
   <title>User Agent</title>
 </head>
 
-<body class='c'>
-  <b><i>当前浏览器 UA</i></b>
+<body>
+  <span>当前浏览器 UA</span>
   <hr>
-  <textarea id='o' class="card w-100" rows=5 style="resize:none;" readonly></textarea>
-  <button class="btn primary w-100" type='button' onclick='copy()'>复制到剪贴板</button>
-  <script>document.getElementById("o").value = navigator.userAgent;</script>
+  <textarea id='ua' rows=5 readonly></textarea>
+  <br>
+  <button onclick='copy()'>复制到剪贴板</button>
+  <script>
+    var ua = navigator.userAgent;
+    document.getElementById('ua').textContent = ua;
+    function copy() { navigator.clipboard.writeText(ua) }
+  </script>
 </body>
 
 </html>
