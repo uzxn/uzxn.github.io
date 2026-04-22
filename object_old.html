@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>osu!mania 段位单曲物量统计</title>
+  <style>
+    * {
+      margin: 0;
+    }
+
+    hr {
+      margin: 0.4rem 0;
+    }
+
+    body {
+      font-family: monospace;
+      font-size: 1rem;
+      line-height: 1.8;
+      max-width: 40rem;
+      padding: 0.8rem;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+
+<body>
+  osu!mania 段位单曲物量统计
+  <hr>
+  <label>段位有多少首歌: <input id="num" type="number" min="1" max="10" value="4"></label>
+  <br>
+  <label>请选择谱面文件: <input id="input_file" type="file" accept=".osu"></label>
+  <hr>
+  <div id="analysis">未选择文件</div>
+  <hr>
+  <div id="result"></div>
+
+  <script>
+    "use strict";
+
+    // ---------- DOM 元素绑定 ----------
+    const fileInput = document.getElementById("input_file");
+    const analysisDiv = document.getElementById("analysis");
+    const resultDiv = document.getElementById("result");
+
+    // ---------- 全局状态 ----------
+    let totalNoteNum = 0;          // 总物量
+    let totalLNoteNum = 0;         // 总 LN 物量
+    let sortedIntv = [];            // 有效的休息时段（时长 >= 1000ms）
+
+    // ---------- 辅助函数：毫秒转 mm:ss:ms ----------
+    function formatTime(ms) {
+      const minutes = String(Math.floor(ms / 60000)).padStart(2, '0');
+      const seconds = String(Math.floor((ms % 60000) / 1000)).padStart(2, '0');
+      const milliseconds = String(ms % 1000).padStart(3, '0');
+      return `${minutes}:${seconds}:${milliseconds}`;
+    }
+
+    /**
+     * 从 HitObjects 中提取所有物件的起止时间（普通 note: head === tail）
+     * 并合并重叠/相邻的区间，再计算区间之间的间隔（休息段）
+     * 返回值: 间隙数组，每个间隙包含:
+     *   cnt: 该间隙开始之前累计的总物量
+     *   lcnt: 该间隙开始之前累计的 LN 物量
+     *   head: 间隙起始时间 (ms)
+     *   tail: 间隙结束时间 (ms)
+     */
+    function findGaps(notes) {
+      // 空数组处理
+      if (!notes.length) return [];
+
+      // 1. 按起始时间升序，起始相同则按结束时间升序
+      const sortedNotes = [...notes].sort((a, b) => {
+        if (a.head !== b.head) return a.head - b.head;
+        return a.tail - b.tail;
+      });
+
+      // 2. 合并重叠或相邻的区间，并统计每个合并块内的总物量及 LN 物量
+      const mergedBlocks = [];
+      let curBlock = { ...sortedNotes[0] };
+      let blockTotal = 1;                     // 当前块包含的物件总数
+      let blockLNTotal = (curBlock.head !== curBlock.tail) ? 1 : 0;
+
+      for (let i = 1; i < sortedNotes.length; i++) {
+        const cur = sortedNotes[i];
+        // 重叠或相邻（cur.head <= curBlock.tail）
+        if (cur.head <= curBlock.tail) {
+          // 扩展合并区间
+          if (cur.tail > curBlock.tail) curBlock.tail = cur.tail;
+          blockTotal++;
+          if (cur.head !== cur.tail) blockLNTotal++;
+        } else {
+          // 结束当前合并块，推入数组
+          mergedBlocks.push({
+            ...curBlock,
+            total: blockTotal,
+            totalLN: blockLNTotal
+          });
+          // 开始新块
+          curBlock = { ...cur };
+          blockTotal = 1;
+          blockLNTotal = (cur.head !== cur.tail) ? 1 : 0;
+        }
+      }
+      // 最后一个块
+      mergedBlocks.push({
+        ...curBlock,
+        total: blockTotal,
+        totalLN: blockLNTotal
+      });
+
+      // 3. 基于合并后的块，计算块之间的间隙（休息段）
+      const gaps = [];
+      let accumulatedTotal = mergedBlocks[0].total;
+      let accumulatedLN = mergedBlocks[0].totalLN;
+
+      for (let i = 1; i < mergedBlocks.length; i++) {
+        const prev = mergedBlocks[i - 1];
+        const curr = mergedBlocks[i];
+        // 若前一块结束时间 < 后一块开始时间，存在间隙
+        if (prev.tail < curr.head) {
+          gaps.push({
+            cnt: accumulatedTotal,          // 间隙前的累计物量
+            lcnt: accumulatedLN,            // 间隙前的累计 LN 物量
+            head: prev.tail,
+            tail: curr.head
+          });
+        }
+        // 累加当前块的物量，用于后续间隙
+        accumulatedTotal += curr.total;
+        accumulatedLN += curr.totalLN;
+      }
+
+      return gaps;
+    }
+
+    /**
+     * 解析 .osu 文件内容，提取 HitObjects，统计总物量和 LN 物量，
+     * 并计算所有休息时段（>=1s），更新全局变量 totalNoteNum, totalLNoteNum, sortedIntv
+     * 同时生成带复选框的选择面板
+     */
+    function processOsuFile(fileContent, numSongs) {
+      // 重置全局数据
+      totalNoteNum = 0;
+      totalLNoteNum = 0;
+      const hitObjects = [];
+
+      const lines = fileContent.split("\n");
+      let afterHitObjects = false;
+
+      for (const rawLine of lines) {
+        const line = rawLine.trim();
+        if (line === "") continue;
+
+        if (line === "[HitObjects]") {
+          afterHitObjects = true;
+          continue;
+        }
+
+        if (afterHitObjects) {
+          // 原解析逻辑：按冒号拆分后取第一部分，再按逗号分割
+          const tokens = line.split(":")[0].split(",");
+          if (tokens.length < 4) continue;   // 格式保护
+
+          const head = Number(tokens[2]);               // 起始时间
+          const type = Number(tokens[3]);               // 物件类型
+          const tmpTail = Number(tokens[5]);            // 长按尾巴时间（若有）
+          const tail = (type >> 7) & 1 ? tmpTail : head; // 长按物件则取尾巴，否则同head
+
+          hitObjects.push({ head, tail });
+          totalNoteNum++;
+          if ((type >> 7) & 1) totalLNoteNum++;
+        }
+      }
+
+      // 计算所有休息间隙，并按时长降序排序，保留时长 ≥ 1000ms 的
+      const allGaps = findGaps(hitObjects);
+      sortedIntv = allGaps
+        .map(gap => ({ ...gap }))          // 浅拷贝保留原结构
+        .sort((a, b) => (b.tail - b.head) - (a.tail - a.head))
+        .filter(gap => (gap.tail - gap.head) >= 1000);
+
+      // 构建用户交互面板（复选框 + LN 选项 + 确定按钮）
+      let panelHtml = `<p>总物量: ${totalNoteNum}, 总 LN 物量: ${totalLNoteNum}</p>`;
+      panelHtml += `<p>请选择正确的休息时段:<br>`;
+
+      for (let i = 0; i < sortedIntv.length; i++) {
+        const gap = sortedIntv[i];
+        const durationSec = ((gap.tail - gap.head) / 1000).toFixed(3);
+        const startStr = formatTime(gap.head);
+        const endStr = formatTime(gap.tail);
+        const checkedAttr = (i < numSongs - 1) ? 'checked' : '';
+        panelHtml += `<label>
+                        <input type="checkbox" name="select" value="${i}" ${checkedAttr}>
+                        ${durationSec}s [${startStr}, ${endStr}]
+                      </label><br>`;
+      }
+      panelHtml += `</p>`;
+      panelHtml += `<div>
+                      <label><input type="checkbox" id="ln" value="ln"> 显示 LN 物量</label>
+                    </div>`;
+      panelHtml += `<button onclick="window.gen()">确定</button>`;
+
+      analysisDiv.innerHTML = panelHtml;
+      resultDiv.innerHTML = "";   // 清空之前的结果
+    }
+
+    /**
+     * 获取用户选中的休息时段（返回每个选中间隙的累计物量信息）
+     * 每个元素: { cnt, lcnt }
+     */
+    function getSelectedIntervals() {
+      const checkboxes = document.getElementsByName("select");
+      const selected = [];
+      for (let i = 0; i < checkboxes.length; i++) {
+        if (checkboxes[i].checked) {
+          const idx = Number(checkboxes[i].value);
+          if (sortedIntv[idx]) {
+            selected.push({
+              cnt: sortedIntv[idx].cnt,
+              lcnt: sortedIntv[idx].lcnt
+            });
+          }
+        }
+      }
+      return selected;
+    }
+
+    /**
+     * 生成最终物量统计数组（note 数组，可选 lnote 数组）
+     */
+    window.gen = function () {
+      // 获取选中的休息时段
+      const selectedBreaks = getSelectedIntervals();
+      // 添加起点(0) 和 终点(总物量)
+      selectedBreaks.push({ cnt: totalNoteNum, lcnt: totalLNoteNum });
+      selectedBreaks.push({ cnt: 0, lcnt: 0 });
+      // 按累计物量升序排序，保证计算差值时顺序正确
+      selectedBreaks.sort((a, b) => a.cnt - b.cnt);
+
+      // 构建输出文本
+      let outputText = `<pre id="jscode">num: ${selectedBreaks.length - 1},\nnote: [${selectedBreaks[1].cnt}`;
+      for (let i = 2; i < selectedBreaks.length; i++) {
+        outputText += `, ${selectedBreaks[i].cnt - selectedBreaks[i - 1].cnt}`;
+      }
+
+      const lnCheckbox = document.getElementById("ln");
+      if (lnCheckbox && lnCheckbox.checked) {
+        outputText += `],\nlnote: [${selectedBreaks[1].lcnt}`;
+        for (let i = 2; i < selectedBreaks.length; i++) {
+          outputText += `, ${selectedBreaks[i].lcnt - selectedBreaks[i - 1].lcnt}`;
+        }
+      }
+      outputText += `]</pre>`;
+      outputText += `<button onclick="window.copyResult()">复制</button>`;
+
+      resultDiv.innerHTML = outputText;
+    };
+
+    /**
+     * 复制生成的代码块内容
+     */
+    window.copyResult = function () {
+      const codeBlock = document.getElementById('jscode');
+      if (codeBlock) {
+        navigator.clipboard.writeText(codeBlock.innerHTML);
+      }
+    };
+
+    // ---------- 文件读取与事件绑定 ----------
+    fileInput.addEventListener("change", function (e) {
+      const file = e.target.files[0];
+      if (!file) {
+        analysisDiv.innerHTML = "未选择文件";
+        resultDiv.innerHTML = "";
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function (evt) {
+        const fileData = evt.target.result;
+        const numSongs = Number(document.getElementById("num").value);
+        processOsuFile(fileData, numSongs);
+      };
+      reader.onerror = function () {
+        analysisDiv.innerHTML = "文件读取失败，请重试";
+        resultDiv.innerHTML = "";
+      };
+      reader.readAsText(file, "UTF-8");
+    });
+  </script>
+</body>
+
+</html>
