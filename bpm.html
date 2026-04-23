@@ -4,39 +4,39 @@
 <head>
   <meta charset='utf-8'>
   <meta name='viewport' content='width=device-width, initial-scale=1, user-scalable=no'>
-  <link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Nunito:,i,b'>
-  <link rel='stylesheet' href='./lit.css'>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
   <title>BPM 检测器</title>
+</head>
+
+<body>
+  <main class="container">
+    <hgroup>
+      <h3>BPM 检测器</h3>
+      <p>有节奏地点击按钮来测算 BPM！</p>
+    </hgroup>
+    <hr>
+    <div class="grid">
+      <input type="reset" onclick='reset()' value="重置">
+      <input readonly id="bpm" style="text-align: center;" value="平均 BPM：0">
+      <input type='button' onclick='calc()' value="点击我">
+    </div>
+  </main>
   <script>
-    var t = new Array();
+    "use strict";
+    let t = new Array();
     function calc() {
       t.push(Date.now());
       if (t.length >= 2) {
-        var tm = t.at(-1) - t.at(0);
-        var bpm = ((t.length - 1) * 60000 / tm).toFixed(3);
-        document.getElementById("bpm").innerHTML = "平均 BPM：" + bpm;
+        let tm = t.at(-1) - t.at(0);
+        let bpm = ((t.length - 1) * 60000 / tm).toFixed(2);
+        document.getElementById("bpm").value = "平均 BPM：" + bpm;
       }
     }
     function reset() {
       t = new Array();
-      document.getElementById("bpm").innerHTML = "平均 BPM：0";
+      document.getElementById("bpm").value = "平均 BPM：0";
     }
   </script>
-</head>
-
-<body class='c'>
-  <b><i>BPM 检测器</i></b>
-  <hr>
-  <p>有节奏地点击按钮来测算 BPM！</p>
-  <div class="card row">
-    <div class="4 col">
-      <button class="btn w-100" type='button' onclick='reset()'>重置</button>
-    </div>
-    <div class="4 col" id="bpm" style="text-align: center;">平均 BPM：0</div>
-    <div class="4 col">
-      <button class="btn primary w-100" type='button' onclick='calc()'>点击我！</button>
-    </div>
-  </div>
 </body>
 
 </html>

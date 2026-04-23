@@ -4,17 +4,29 @@
 <head>
   <meta charset='utf-8'>
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito:,i,b">
-  <link rel='stylesheet' href='./lit.css'>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
   <title>Search.</title>
+  <style>
+    body {
+      display: flex;
+      min-height: 80vh;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
 </head>
 
-<body class='c'>
-  <h1>Search.</h1>
-  <hr>
-  <form action="https://cn.bing.com/search">
-    <input class="card w-100" type="text" name="q" autofocus placeholder="Just type something...">
-  </form>
+<body>
+  <main class="container">
+    <hgroup style="text-align: center;">
+      <h1>Search.</h1>
+    </hgroup>
+    <hr>
+    <form role="search" action="https://cn.bing.com/search">
+      <input type="search" name="q" autofocus placeholder="Just type something...">
+      <input type="submit" value="Search">
+    </form>
+  </main>
 </body>
 
 </html>

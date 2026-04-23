@@ -4,32 +4,41 @@
 <head>
   <meta charset='utf-8'>
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
   <script src="https://cdn.jsdelivr.net/npm/downloadjs/download.min.js"></script>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito:,i,b">
-  <link rel='stylesheet' href='./lit.css'>
   <title>Malody 谱面物件间隔归一化 - ScrollEdit</title>
 </head>
 
-<body class='c'>
-  <i><b>Malody 谱面物件间隔归一化 - ScrollEdit</b></i>
-  <hr>
-  <label for="k">流速倍率（数值越大流速越快）：</label>
-  <input id="k" class="card w-100" value=0.2 placeholder="默认值为 0.2" name="k">
-  <label for="input_file">请选择 .mc 谱面文件：</label>
-  <input id="i" class="card w-100" type="file" accept=".mc" name="input_file">
-  <label for="version">修改后的难度名（version）：</label>
-  <input id="n" class="card w-100" name="version" readonly>
-  <button id='d' style="display:none;" type="button" class="btn primary w-100" onclick="dl()">立即下载！</button>
-  <textarea id='o' class="card w-100" rows=30 style="resize:none;" readonly placeholder='修改后的文件预览'></textarea>
-  <script defer>
-    // "use strict";
+<body>
+  <main class="container">
+    <hgroup>
+      <h3>Malody 谱面物件间隔归一化</h3>
+      <p>自动调整流速保持物件间隔一致</p>
+    </hgroup>
+    <hr>
+    <div class="grid">
+      <div>
+        <label>请选择 .mc 谱面文件：
+          <input id="i" type="file" accept=".mc">
+        </label>
+        <label>流速倍率（数值越大，流速越快）：
+          <input id="k" value=0.2 placeholder="默认值为 0.2">
+        </label>
+        <label>修改后的难度名（version）：
+          <input id="n" readonly>
+        </label>
+        <input disabled type="button" id='d' onclick="dl()" value="下载新谱面">
+      </div>
+      <label>JSON 预览
+        <textarea readonly id='o' style="height: 100%; font-family: monospace; resize: none;"
+          placeholder='选择 .mc 文件后自动生成预览'></textarea>
+      </label>
+    </div>
+  </main>
+  <script>
+    "use strict";
     let res = "(none)";
     const input = document.getElementById("i");
-    input.addEventListener("change", function () {
-      const reader = new FileReader();
-      reader.readAsText(input.files[0], "UTF-8");
-      reader.onload = cb;
-    });
     function cb(event) {
       let k = Number(document.getElementById("k").value);
       if (k <= 0) {
@@ -41,25 +50,30 @@
       obj.effect = [];
       for (let i = 0; i < obj.note.length - 1; i++) {
         const a = obj.note[i].beat[0], b = obj.note[i].beat[1], c = obj.note[i].beat[2];
-        if (i == obj.note.length - 2) {
+        if (i === obj.note.length - 2) {
           obj.effect.push({ beat: [a, b, c], scroll: k });
           continue;
         }
         const d = obj.note[i + 1].beat[0], e = obj.note[i + 1].beat[1], f = obj.note[i + 1].beat[2];
         const m = (c * d * f + c * e - a * c * f - b * f) / f / c;
-        if (m == 0) continue;
+        if (m === 0) continue;
         if (obj.effect.length >= 1 && Math.abs(k - obj.effect.at(-1).scroll * m) <= Number.EPSILON) continue;
         obj.effect.push({ beat: [a, b, c], scroll: k / m });
       }
       res = JSON.stringify(obj);
-      document.getElementById("o").innerHTML = res;
+      document.getElementById("o").value = res;
       document.getElementById("n").value = obj.meta.version;
-      document.getElementById("d").style = "display:inline;";
+      document.getElementById("d").disabled = 0;
     }
     function dl() {
-      if (res == "(none)") return;
+      if (res === "(none)") return;
       download(new Blob([res]), "ScrollEdit_" + input.files[0].name, "text/plain");
     }
+    input.addEventListener("change", function () {
+      const reader = new FileReader();
+      reader.readAsText(input.files[0], "UTF-8");
+      reader.onload = cb;
+    });
   </script>
 </body>
 
