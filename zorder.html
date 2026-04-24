@@ -1,0 +1,166 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset='utf-8'>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/downloadjs/download.min.js"></script>
+  <title>Z-Order 图片混淆工具</title>
+  <style>
+    article {
+      width: 100%;
+      height: 60vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    canvas {
+      max-width: 100%;
+      max-height: 100%;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="container">
+    <hgroup>
+      <h3>Z-Order 图片混淆工具</h3>
+      <p>一种基于 Z-Order 和 Morton 码的图片混淆方式。</p>
+    </hgroup>
+    <hr>
+    <input type="file" id="upload" accept="image/*">
+    <div class="grid">
+      <button id="confuse">混淆</button>
+      <button id="restore">还原</button>
+      <button class="secondary" id="downloadPNG">下载 PNG</button>
+      <button class="secondary" id="downloadJPG">下载 JPG</button>
+    </div>
+    <br>
+    <article>
+      <canvas id="canvas"></canvas>
+    </article>
+  </main>
+
+  <script>
+    "use strict";
+
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const upload = document.getElementById('upload');
+    const confuseBtn = document.getElementById('confuse');
+    const restoreBtn = document.getElementById('restore');
+    const downloadPNGBtn = document.getElementById('downloadPNG');
+    const downloadJPGBtn = document.getElementById('downloadJPG');
+
+    let w = 0, h = 0;
+    let fwd = [], rev = [];
+
+    const F = x => {
+      x = (x | (x << 8)) & 0x00FF00FF;
+      x = (x | (x << 4)) & 0x0F0F0F0F;
+      x = (x | (x << 2)) & 0x33333333;
+      x = (x | (x << 1)) & 0x55555555;
+      return x;
+    };
+    const morton = (x, y) => F(x & 0xFFFF) | (F(y & 0xFFFF) << 1);
+
+    // 构建映射表 (Z-Order + 循环偏移)
+    const buildMaps = (width, height) => {
+      const total = width * height;
+      const items = new Array(total);
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const idx = y * width + x;
+          items[idx] = { z: morton(x, y), idx: idx };
+        }
+      }
+      items.sort((a, b) => a.z - b.z);
+      const rank = new Array(total);
+      for (let i = 0; i < total; i++) rank[items[i].idx] = i;
+      fwd = new Array(total), rev = new Array(total);
+      for (let i = 0; i < total; i++) {
+        const newRank = (rank[i] + width + height) % total;
+        fwd[i] = items[newRank].idx;
+      }
+      for (let i = 0; i < total; i++) rev[fwd[i]] = i;
+    };
+
+    // 像素重映射
+    const remap = (map) => {
+      if (!w || !h || map.length !== w * h) {
+        alert('请选择图片文件');
+        return;
+      }
+      const total = w * h;
+      const src = ctx.getImageData(0, 0, w, h).data;
+      const dst = new Uint8ClampedArray(total * 4);
+      for (let i = 0; i < total; i++) {
+        const si = i * 4, ti = map[i] * 4;
+        dst[ti] = src[si];
+        dst[ti + 1] = src[si + 1];
+        dst[ti + 2] = src[si + 2];
+        dst[ti + 3] = src[si + 3];
+      }
+      ctx.putImageData(new ImageData(dst, w, h), 0, 0);
+    };
+
+    // 加载图片
+    let currentUrl = null;
+    const loadImage = (file) => {
+      if (!file || !file.type.startsWith('image/')) {
+        alert('请选择图片文件');
+        return;
+      }
+      if (currentUrl) URL.revokeObjectURL(currentUrl);
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      currentUrl = url;
+      img.onload = () => {
+        w = img.width;
+        h = img.height;
+        canvas.width = w;
+        canvas.height = h;
+        ctx.drawImage(img, 0, 0);
+        buildMaps(w, h);
+        URL.revokeObjectURL(url);
+        currentUrl = null;
+      };
+      img.onerror = () => {
+        alert('图片加载失败');
+        URL.revokeObjectURL(url);
+        currentUrl = null;
+        w = h = 0;
+        canvas.width = canvas.height = 0;
+      };
+      img.src = url;
+    };
+
+    const downloadCanvasPNG = () => {
+      if (!w || !h) return alert('没有可下载的图片');
+      const filename = `zorder_${w}x${h}_${Date.now()}.png`;
+      canvas.toBlob(blob => {
+        if (blob) download(blob, filename, 'image/png');
+        else alert('生成图片失败');
+      }, 'image/png');
+    };
+
+    const downloadCanvasJPG = () => {
+      if (!w || !h) return alert('没有可下载的图片');
+      const filename = `zorder_${w}x${h}_${Date.now()}.jpg`;
+      canvas.toBlob(blob => {
+        if (blob) download(blob, filename, 'image/jpeg');
+        else alert('生成图片失败');
+      }, 'image/jpeg');
+    };
+
+    upload.addEventListener('change', e => e.target.files[0] && loadImage(e.target.files[0]));
+    confuseBtn.addEventListener('click', () => remap(fwd));
+    restoreBtn.addEventListener('click', () => remap(rev));
+    downloadPNGBtn.addEventListener('click', downloadCanvasPNG);
+    downloadJPGBtn.addEventListener('click', downloadCanvasJPG);
+  </script>
+</body>
+
+</html>
