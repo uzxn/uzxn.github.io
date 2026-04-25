@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script type="module" src="https://cdn.jsdelivr.net/npm/zero-md@3?register"></script>
+  <title>Markdown 预览</title>
+</head>
+
+<body>
+  <div id="input">
+    <textarea id="source" rows="40"></textarea>
+    <button id="confirm">确定</button>
+  </div>
+
+  <zero-md id="output" style="display: none;">
+    <script id="preview" type="text/markdown"></script>
+  </zero-md>
+
+  <script>
+    const input = document.getElementById('input');
+    const source = document.getElementById('source');
+    const confirm = document.getElementById('confirm');
+    const output = document.getElementById('output');
+    const preview = document.getElementById('preview');
+
+    confirm.addEventListener('click', () => {
+      preview.textContent = source.value;
+      output.style.display = 'block';
+      input.style.display = 'none';
+    });
+  </script>
+</body>
+
+</html>
