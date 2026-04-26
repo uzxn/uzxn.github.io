@@ -3,36 +3,41 @@
 
 <head>
   <meta charset='utf-8'>
-  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-light.min.css">
   <style>
-    * {
-      margin: .4rem 0;
+    .markdown-body {
+      box-sizing: border-box;
+      min-width: 200px;
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 45px;
     }
 
-    body {
-      max-width: 40rem;
-      padding: .8rem;
-      margin: auto;
-    }
-
-    textarea {
-      width: 90%;
-      resize: none;
+    @media (max-width: 767px) {
+      .markdown-body {
+        padding: 15px;
+      }
     }
   </style>
   <title>User Agent</title>
 </head>
 
-<body>
-  <span>当前浏览器 UA</span>
-  <hr>
-  <textarea id='ua' rows=5 readonly></textarea>
-  <br>
-  <button onclick='copy()'>复制到剪贴板</button>
+<body class="markdown-body">
+  <p>当前浏览器 UA 是：</p>
+  <p>
+    <code id='ua'></code>
+  </p>
+  <p>
+    <a href="javascript:void(0)" onclick="copy()">复制到剪贴板</a>
+  </p>
   <script>
-    var ua = navigator.userAgent;
+    const ua = navigator.userAgent;
     document.getElementById('ua').textContent = ua;
-    function copy() { navigator.clipboard.writeText(ua) }
+    function copy() {
+      navigator.clipboard.writeText(ua);
+      alert('复制成功');
+    }
   </script>
 </body>
 
