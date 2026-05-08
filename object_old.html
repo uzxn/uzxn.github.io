@@ -3,38 +3,46 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>osu!mania 段位单曲物量统计</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-light.min.css">
   <style>
-    * {
-      margin: 0;
-    }
-
-    hr {
-      margin: 0.4rem 0;
-    }
-
-    body {
-      font-family: monospace;
-      font-size: 1rem;
-      line-height: 1.8;
-      max-width: 40rem;
-      padding: 0.8rem;
+    .markdown-body {
+      box-sizing: border-box;
+      min-width: 200px;
+      max-width: 980px;
       margin: 0 auto;
+      padding: 45px;
+    }
+
+    @media (max-width: 767px) {
+      .markdown-body {
+        padding: 15px;
+      }
     }
   </style>
+  <title>osu!mania 段位单曲物量统计</title>
 </head>
 
-<body>
-  osu!mania 段位单曲物量统计
-  <hr>
-  <label>段位有多少首歌: <input id="num" type="number" min="1" max="10" value="4"></label>
-  <br>
-  <label>请选择谱面文件: <input id="input_file" type="file" accept=".osu"></label>
-  <hr>
-  <div id="analysis">未选择文件</div>
-  <hr>
-  <div id="result"></div>
+<body class="markdown-body">
+  <h1>osu!mania 段位单曲物量统计</h1>
+  <p>
+    请选择谱面文件：
+    <input id="input_file" type="file" accept=".osu">
+  </p>
+  <p>
+    段位有多少首歌？
+    <input id="num" type="number" min="1" max="10" value="4">
+  </p>
+  <div id="analysis">
+    <h2>分析结果</h2>
+    <p>
+      <strong>
+        总物量：<code id="totalNote">200</code>，总 LN 物量：<code id="totalLNote">100</code>
+      </strong>
+    </p>
+    <p><strong>请选择正确的休息时段</strong>：</p>
+  </div>
+  <p id="result"></p>
 
   <script>
     "use strict";
