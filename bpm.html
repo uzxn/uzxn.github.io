@@ -1,42 +1,56 @@
 <!doctype html>
 <html>
-
-<head>
-  <meta charset='utf-8'>
-  <meta name='viewport' content='width=device-width, initial-scale=1, user-scalable=no'>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
-  <title>BPM 检测器</title>
-</head>
-
-<body>
-  <main class="container">
-    <hgroup>
-      <h3>BPM 检测器</h3>
-      <p>有节奏地点击按钮来测算 BPM！</p>
-    </hgroup>
-    <hr>
-    <div class="grid">
-      <input type="reset" onclick='reset()' value="重置">
-      <input readonly id="bpm" style="text-align: center;" value="平均 BPM：0">
-      <input type='button' onclick='calc()' value="点击我">
-    </div>
-  </main>
-  <script>
-    "use strict";
-    let t = new Array();
-    function calc() {
-      t.push(Date.now());
-      if (t.length >= 2) {
-        let tm = t.at(-1) - t.at(0);
-        let bpm = ((t.length - 1) * 60000 / tm).toFixed(2);
-        document.getElementById("bpm").value = "平均 BPM：" + bpm;
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>BPM 检测器</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
       }
-    }
-    function reset() {
-      t = new Array();
-      document.getElementById("bpm").value = "平均 BPM：0";
-    }
-  </script>
-</body>
-
+      body {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        line-height: 2;
+      }
+      hr {
+        margin: 8px 0;
+      }
+      button {
+        width: 100%;
+        height: 100px;
+        font-size: medium;
+      }
+      #bpm {
+        width: 100%;
+        margin: 8px 0;
+        padding: 4px;
+        text-align: center;
+        border: 1px solid #ccc;
+      }
+    </style>
+  </head>
+  <body>
+    <h3>BPM & 叠速检测器</h3>
+    <p>有节奏地点击按钮来测算 BPM & 叠速</p>
+    <hr />
+    <p id="bpm">平均 BPM：0<br />平均叠速：0</p>
+    <button onclick="calc()">点击此处 或 敲击任意键盘按键</button>
+    <script>
+      const t = new Array();
+      function calc() {
+        t.push(Date.now());
+        if (t.length > 1) {
+          const tm = t.at(-1) - t.at(0);
+          const bpm = ((t.length - 1) * 60000) / tm;
+          const jack = ((t.length - 1) * 15000) / tm;
+          document.getElementById("bpm").innerHTML = "平均 BPM：" + bpm.toFixed(2) + "<br>" + "平均叠速：" + jack.toFixed(2);
+        }
+      }
+      window.onkeydown = calc;
+    </script>
+  </body>
 </html>
