@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>单词查询</title>
+    <title>单词释义查询</title>
     <style>
       * {
         margin: 0;
@@ -24,19 +24,13 @@
         margin: 4px 0;
         padding: 8px;
       }
-      input {
-        width: 300px;
-      }
-      button {
-        width: 60px;
-      }
       .field {
         padding: 4px 0;
         border-bottom: 1px solid #ccc;
       }
       .label {
         font-weight: bold;
-        margin-right: 10px;
+        margin-right: 8px;
       }
       .value {
         word-break: break-word;
@@ -49,71 +43,69 @@
   </head>
 
   <body>
-    <h3>CET6 · 单词查询</h3>
+    <h3>单词释义查询</h3>
     <input autofocus type="text" id="word" placeholder="abandon" />
     <button id="search">查词</button>
     <div id="result"></div>
     <script>
-      (function () {
-        var base = "https://cdn.jsdelivr.net/gh/uzxn/baicizhan-CET6/words/";
-        var input = document.getElementById("word");
-        var btn = document.getElementById("search");
-        var resultDiv = document.getElementById("result");
+      var base = "https://cdn.jsdelivr.net/gh/uzxn/baicizhan-CET6/words/";
+      var input = document.getElementById("word");
+      var btn = document.getElementById("search");
+      var resultDiv = document.getElementById("result");
 
-        function renderField(label, value) {
-          var display = value === undefined || value === null || value === "" ? "暂无" : String(value);
-          return '<div class="field"><span class="label">' + label + '</span><span class="value">' + display + "</span></div>";
+      function renderField(label, value) {
+        var display = value === undefined || value === null || value === "" ? "暂无" : String(value);
+        return '<div class="field"><span class="label">' + label + '</span><span class="value">' + display + "</span></div>";
+      }
+
+      function render(data) {
+        var html = "";
+        html += renderField("单词", data.word);
+        html += renderField("音标", data.accent);
+        html += renderField("中文释义", data.mean_cn);
+        html += renderField("英文释义", data.mean_en);
+        html += renderField("例句", data.sentence);
+        html += renderField("例句翻译", data.sentence_trans);
+        html += renderField("短语", data.sentence_phrase);
+        html += renderField("词源", data.word_etyma);
+        return html;
+      }
+
+      function query() {
+        var w = input.value.trim().toLowerCase();
+        if (!w) {
+          resultDiv.innerHTML = '<div class="error">请输入单词</div>';
+          return;
         }
-
-        function render(data) {
-          var html = "";
-          html += renderField("单词", data.word);
-          html += renderField("音标", data.accent);
-          html += renderField("中文释义", data.mean_cn);
-          html += renderField("英文释义", data.mean_en);
-          html += renderField("例句", data.sentence);
-          html += renderField("例句翻译", data.sentence_trans);
-          html += renderField("短语", data.sentence_phrase);
-          html += renderField("词源", data.word_etyma);
-          return html;
-        }
-
-        function query() {
-          var w = input.value.trim().toLowerCase();
-          if (!w) {
-            resultDiv.innerHTML = '<div class="error">请输入单词</div>';
-            return;
-          }
-          resultDiv.innerHTML = "加载中...";
-          var xhr = new XMLHttpRequest();
-          xhr.open("GET", base + w + ".json", true);
-          xhr.onreadystatechange = function () {
-            if (xhr.readyState === 4) {
-              if (xhr.status === 200) {
-                try {
-                  var data = JSON.parse(xhr.responseText);
-                  resultDiv.innerHTML = render(data);
-                } catch (e) {
-                  resultDiv.innerHTML = '<div class="error">解析错误</div>';
-                }
-              } else if (xhr.status === 404) {
-                resultDiv.innerHTML = '<div class="error">单词 "' + w + '" 未找到</div>';
-              } else {
-                resultDiv.innerHTML = '<div class="error">请求失败 (' + xhr.status + ")</div>";
+        resultDiv.innerHTML = "加载中...";
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", base + w + ".json", true);
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState === 4) {
+            if (xhr.status === 200) {
+              try {
+                var data = JSON.parse(xhr.responseText);
+                resultDiv.innerHTML = render(data);
+              } catch (e) {
+                resultDiv.innerHTML = '<div class="error">解析错误</div>';
               }
+            } else if (xhr.status === 404) {
+              resultDiv.innerHTML = '<div class="error">单词 "' + w + '" 未找到</div>';
+            } else {
+              resultDiv.innerHTML = '<div class="error">请求失败 (' + xhr.status + ")</div>";
             }
-          };
-          xhr.onerror = function () {
-            resultDiv.innerHTML = '<div class="error">网络错误</div>';
-          };
-          xhr.send();
-        }
-
-        btn.onclick = query;
-        input.onkeypress = function (e) {
-          if (e.key === "Enter") query();
+          }
         };
-      })();
+        xhr.onerror = function () {
+          resultDiv.innerHTML = '<div class="error">网络错误</div>';
+        };
+        xhr.send();
+      }
+
+      btn.onclick = query;
+      input.onkeypress = function (e) {
+        if (e.key === "Enter") query();
+      };
     </script>
   </body>
 </html>

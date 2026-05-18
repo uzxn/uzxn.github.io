@@ -24,15 +24,15 @@
         margin: 8px 0;
         padding: 8px;
       }
-      .canvasDiv {
-        width: 400px;
-        height: 400px;
-        margin: 8px 0;
-      }
       canvas {
         max-width: 100%;
-        max-height: 100%;
+        max-height: 400px;
         border: 1px solid #ccc;
+        margin: 8px 0;
+      }
+      #info {
+        border: 1px solid #ccc;
+        padding: 6px;
       }
     </style>
   </head>
@@ -47,18 +47,20 @@
     <button id="restore">还原</button>
     <button id="downloadPNG">下载 PNG</button>
     <button id="downloadJPG">下载 JPG</button>
-    <div class="canvasDiv">
-      <canvas id="canvas"></canvas>
-    </div>
+    <br />
+    <span id="info">未选择文件</span>
+    <br />
+    <canvas id="canvas"></canvas>
 
     <script>
-      const canvas = document.getElementById("canvas");
-      const ctx = canvas.getContext("2d");
+      const infoSpan = document.getElementById("info");
       const upload = document.getElementById("upload");
       const confuseBtn = document.getElementById("confuse");
       const restoreBtn = document.getElementById("restore");
       const downloadPNGBtn = document.getElementById("downloadPNG");
       const downloadJPGBtn = document.getElementById("downloadJPG");
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
 
       let w = 0,
         h = 0;
@@ -66,13 +68,14 @@
         rev = [];
 
       const F = (x) => {
+        x = x & 0xffff;
         x = (x | (x << 8)) & 0x00ff00ff;
         x = (x | (x << 4)) & 0x0f0f0f0f;
         x = (x | (x << 2)) & 0x33333333;
         x = (x | (x << 1)) & 0x55555555;
         return x;
       };
-      const morton = (x, y) => F(x & 0xffff) | (F(y & 0xffff) << 1);
+      const morton = (x, y) => F(x) | (F(y) << 1);
 
       // 构建映射表 (Z-Order + 循环偏移)
       const buildMaps = (width, height) => {
@@ -97,10 +100,6 @@
 
       // 像素重映射
       const remap = (map) => {
-        if (!w || !h || map.length !== w * h) {
-          alert("请选择图片文件");
-          return;
-        }
         const total = w * h;
         const src = ctx.getImageData(0, 0, w, h).data;
         const dst = new Uint8ClampedArray(total * 4);
@@ -119,10 +118,12 @@
       let currentUrl = null;
       const loadImage = (file) => {
         if (!file || !file.type.startsWith("image/")) {
+          infoSpan.innerHTML = "未选择文件";
           alert("请选择图片文件");
           return;
         }
         if (currentUrl) URL.revokeObjectURL(currentUrl);
+        infoSpan.innerHTML = "加载中...";
         const img = new Image();
         const url = URL.createObjectURL(file);
         currentUrl = url;
@@ -135,6 +136,7 @@
           buildMaps(w, h);
           URL.revokeObjectURL(url);
           currentUrl = null;
+          infoSpan.innerHTML = "加载完成";
         };
         img.onerror = () => {
           alert("图片加载失败");
@@ -142,6 +144,7 @@
           currentUrl = null;
           w = h = 0;
           canvas.width = canvas.height = 0;
+          infoSpan.innerHTML = "加载失败";
         };
         img.src = url;
       };
@@ -164,7 +167,7 @@
         }, "image/jpeg");
       };
 
-      upload.addEventListener("change", (e) => e.target.files[0] && loadImage(e.target.files[0]));
+      upload.addEventListener("change", (e) => loadImage(e.target.files[0]));
       confuseBtn.addEventListener("click", () => remap(fwd));
       restoreBtn.addEventListener("click", () => remap(rev));
       downloadPNGBtn.addEventListener("click", downloadCanvasPNG);
