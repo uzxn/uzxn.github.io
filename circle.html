@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>圆形 PNG 生成器（带描边）</title>
+    <style>
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+        padding: 24px;
+      }
+      input[type="number"] {
+        width: 60px;
+      }
+      canvas {
+        max-width: 300px;
+        max-height: 300px;
+        background: repeating-conic-gradient(#eee 0 25%, #fff 0 50%) 0 0/16px
+          16px;
+        border: 1px solid #ddd;
+      }
+    </style>
+  </head>
+  <body>
+    <div>图片尺寸 <input id="s" type="number" value="150" min="1" /></div>
+    <div>
+      圆形半径 <input id="r" type="number" value="70" min="1" /> 圆形颜色
+      <input id="c" type="color" value="#3b4252" />
+    </div>
+    <div>
+      描边粗细 <input id="sw" type="number" value="5" min="0" /> 描边颜色
+      <input id="sc" type="color" value="#4c566a" />
+    </div>
+
+    <canvas id="cv"></canvas>
+    <button id="dl">下载 PNG</button>
+
+    <script>
+      const cv = document.getElementById("cv"),
+        ctx = cv.getContext("2d");
+      const R = document.getElementById("r"),
+        S = document.getElementById("s"),
+        C = document.getElementById("c");
+      const SW = document.getElementById("sw"),
+        SC = document.getElementById("sc");
+
+      function draw() {
+        const s = +S.value,
+          r = +R.value;
+        const sw = +SW.value;
+        const fillColor = C.value;
+        const strokeColor = SC.value;
+
+        cv.width = cv.height = s; // 画布尺寸
+        ctx.clearRect(0, 0, s, s); // 透明背景
+
+        const cx = s / 2,
+          cy = s / 2;
+
+        // 1. 画填充圆（原圆）
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fillStyle = fillColor;
+        ctx.fill();
+
+        // 2. 画描边（覆盖在填充圆上层）
+        if (sw > 0) {
+          if (sw >= r) {
+            // 描边粗细 >= 半径，整个圆都是描边色
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            ctx.fillStyle = strokeColor;
+            ctx.fill();
+          } else {
+            // 圆环：外半径 r，内半径 r - sw
+            const innerR = r - sw;
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, Math.PI * 2, false); // 外圆顺时针
+            ctx.arc(cx, cy, innerR, 0, Math.PI * 2, true); // 内圆逆时针
+            ctx.fillStyle = strokeColor;
+            ctx.fill("evenodd");
+          }
+        }
+      }
+
+      document.getElementById("dl").onclick = () => {
+        const a = document.createElement("a");
+        a.href = cv.toDataURL(); // 默认即 PNG，透明保留
+        a.download = "circle.png";
+        a.click();
+      };
+
+      [R, S, C, SW, SC].forEach((el) => (el.oninput = draw));
+      draw();
+    </script>
+  </body>
+</html>
