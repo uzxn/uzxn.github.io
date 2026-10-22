@@ -5,60 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://cdn.jsdelivr.net/npm/downloadjs/download.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jszip/dist/jszip.min.js"></script>
-    <title>Gilbert 批量图片混淆</title>
+    <link rel="stylesheet" href="normalize.min.css" />
     <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
       body {
-        max-width: 600px;
+        max-width: 50rem;
         margin: 0 auto;
-        padding: 20px;
-        line-height: 2;
-      }
-      hr {
-        margin: 8px 0;
-      }
-      input {
-        margin-bottom: 8px;
-      }
-      button {
-        margin-bottom: 8px;
-        padding: 8px;
+        padding: 1rem;
       }
       canvas {
         max-width: 100%;
         max-height: 400px;
         border: 1px solid #ccc;
-        margin-top: 8px;
-      }
-      #status {
-        border: 1px solid #ccc;
-        padding: 6px;
       }
     </style>
+    <title>Gilbert 批量图片混淆</title>
   </head>
 
   <body>
     <h3>Gilbert 批量图片混淆</h3>
     <p>支持图片和 ZIP 图包格式</p>
     <hr />
-    <input type="file" id="fileInput" multiple accept="image/*,.zip" />
-    <br />
-    <button id="encryptBtn">加密全部</button>
-    <button id="decryptBtn">解密全部</button>
-    <button id="downloadCurrentBtn">下载当前图片</button>
-    <button id="downloadBtn">下载全部 (ZIP)</button>
-    <br />
-    <button id="prevBtn">◀ 上一张</button>
-    <button id="nextBtn">下一张 ▶</button>
-    <span id="counter"></span>
-    <br />
-    <span id="status">未选择图片</span>
-    <br />
-    <canvas id="previewCanvas"></canvas>
+    <p><input type="file" id="fileInput" multiple accept="image/*,.zip" /></p>
+    <p>
+      <button id="encryptBtn">加密全部</button>
+      <button id="decryptBtn">解密全部</button>
+      <button id="downloadCurrentBtn">下载当前图片</button>
+      <button id="downloadBtn">下载全部 (ZIP)</button>
+    </p>
+    <p>
+      <button id="prevBtn">◀ 上一张</button>
+      <button id="nextBtn">下一张 ▶</button>
+      <span id="counter"></span>
+    </p>
+    <p id="status">未选择图片</p>
+    <p><canvas id="previewCanvas"></canvas></p>
 
     <script>
       let images = []; // 存储所有图片数据
@@ -112,7 +92,15 @@
           if (h2 % 2 !== 0 && h > 2) ((bx2 += dbx), (by2 += dby));
           generate(x, y, bx2, by2, ax2, ay2, coords);
           generate(x + bx2, y + by2, ax, ay, bx - bx2, by - by2, coords);
-          generate(x + (ax - dax) + (bx2 - dbx), y + (ay - day) + (by2 - dby), -bx2, -by2, -(ax - ax2), -(ay - ay2), coords);
+          generate(
+            x + (ax - dax) + (bx2 - dbx),
+            y + (ay - day) + (by2 - dby),
+            -bx2,
+            -by2,
+            -(ax - ax2),
+            -(ay - ay2),
+            coords,
+          );
         }
       }
 
@@ -121,9 +109,11 @@
         const total = width * height;
         const curve = gilbert2d(width, height);
         const linearCurve = new Uint32Array(total);
-        for (let i = 0; i < total; i++) linearCurve[i] = curve[i][1] * width + curve[i][0];
+        for (let i = 0; i < total; i++)
+          linearCurve[i] = curve[i][1] * width + curve[i][0];
         const encMap = new Uint32Array(total);
-        for (let i = 0; i < total; i++) encMap[linearCurve[i]] = linearCurve[(i + offset) % total];
+        for (let i = 0; i < total; i++)
+          encMap[linearCurve[i]] = linearCurve[(i + offset) % total];
         return encMap;
       }
 
@@ -180,7 +170,8 @@
         }
         const img = images[currentIndex];
         drawImageDataToCanvas(img.currentData);
-        document.getElementById("counter").innerText = `${currentIndex + 1}/${images.length} - ${img.name}`;
+        document.getElementById("counter").innerText =
+          `${currentIndex + 1}/${images.length} - ${img.name}`;
       }
 
       // 从 Blob 加载单张图片，生成图像数据和映射表
@@ -278,11 +269,16 @@
           return;
         }
         for (let i = 0; i < images.length; i++) {
-          document.getElementById("status").innerText = `加密中：${i + 1}/${images.length}`;
-          images[i].currentData = permuteImageData(images[i].currentData, images[i].encMap);
+          document.getElementById("status").innerText =
+            `加密中：${i + 1}/${images.length}`;
+          images[i].currentData = permuteImageData(
+            images[i].currentData,
+            images[i].encMap,
+          );
         }
         refreshPreview();
-        document.getElementById("status").innerText = `加密完成，共 ${images.length} 张`;
+        document.getElementById("status").innerText =
+          `加密完成，共 ${images.length} 张`;
       }
 
       // 解密所有图片
@@ -292,11 +288,16 @@
           return;
         }
         for (let i = 0; i < images.length; i++) {
-          document.getElementById("status").innerText = `解密中：${i + 1}/${images.length}`;
-          images[i].currentData = permuteImageData(images[i].currentData, images[i].decMap);
+          document.getElementById("status").innerText =
+            `解密中：${i + 1}/${images.length}`;
+          images[i].currentData = permuteImageData(
+            images[i].currentData,
+            images[i].decMap,
+          );
         }
         refreshPreview();
-        document.getElementById("status").innerText = `解密完成，共 ${images.length} 张`;
+        document.getElementById("status").innerText =
+          `解密完成，共 ${images.length} 张`;
       }
 
       // 下载当前预览的图片（单张）
@@ -328,7 +329,11 @@
           statusDiv.innerText = `打包中：${i + 1}/${images.length}`;
         }
         const content = await zip.generateAsync({ type: "blob" });
-        download(content, images[0].name + ` 等 ${images.length} 张图片.zip`, "application/zip");
+        download(
+          content,
+          images[0].name + ` 等 ${images.length} 张图片.zip`,
+          "application/zip",
+        );
         statusDiv.innerText = `下载已开始（共 ${images.length} 张）`;
       }
 
@@ -348,10 +353,18 @@
       document.getElementById("fileInput").addEventListener("change", (e) => {
         if (e.target.files.length) loadImages(Array.from(e.target.files));
       });
-      document.getElementById("encryptBtn").addEventListener("click", encryptAll);
-      document.getElementById("decryptBtn").addEventListener("click", decryptAll);
-      document.getElementById("downloadCurrentBtn").addEventListener("click", downloadCurrent);
-      document.getElementById("downloadBtn").addEventListener("click", downloadAll);
+      document
+        .getElementById("encryptBtn")
+        .addEventListener("click", encryptAll);
+      document
+        .getElementById("decryptBtn")
+        .addEventListener("click", decryptAll);
+      document
+        .getElementById("downloadCurrentBtn")
+        .addEventListener("click", downloadCurrent);
+      document
+        .getElementById("downloadBtn")
+        .addEventListener("click", downloadAll);
       document.getElementById("prevBtn").addEventListener("click", prevImage);
       document.getElementById("nextBtn").addEventListener("click", nextImage);
     </script>

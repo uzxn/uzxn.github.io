@@ -3,40 +3,44 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>圆形 PNG 生成器（带描边）</title>
+    <link rel="stylesheet" href="normalize.min.css" />
     <style>
       body {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 14px;
-        padding: 24px;
+        max-width: 50rem;
+        margin: 0 auto;
+        padding: 1rem;
       }
       input[type="number"] {
-        width: 60px;
+        width: 100px;
       }
       canvas {
         max-width: 300px;
         max-height: 300px;
         background: repeating-conic-gradient(#eee 0 25%, #fff 0 50%) 0 0/16px
           16px;
-        border: 1px solid #ddd;
+        border: 1px solid #ccc;
       }
     </style>
+    <title>圆形 PNG 生成器</title>
   </head>
   <body>
-    <div>图片尺寸 <input id="s" type="number" value="150" min="1" /></div>
-    <div>
+    <h3>圆形 PNG 生成器</h3>
+    <hr />
+    <p>图片尺寸 <input id="s" type="number" value="150" min="1" /></p>
+    <p>
       圆形半径 <input id="r" type="number" value="70" min="1" /> 圆形颜色
       <input id="c" type="color" value="#3b4252" />
-    </div>
-    <div>
+    </p>
+    <p>
       描边粗细 <input id="sw" type="number" value="5" min="0" /> 描边颜色
       <input id="sc" type="color" value="#4c566a" />
-    </div>
-
-    <canvas id="cv"></canvas>
-    <button id="dl">下载 PNG</button>
+    </p>
+    <p>
+      <button id="dl">下载 PNG</button>
+    </p>
+    <p>
+      <canvas id="cv"></canvas>
+    </p>
 
     <script>
       const cv = document.getElementById("cv"),

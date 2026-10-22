@@ -3,45 +3,25 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="normalize.min.css" />
     <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
       body {
-        max-width: 600px;
+        max-width: 50rem;
         margin: 0 auto;
-        padding: 20px;
-        line-height: 2;
-      }
-      hr {
-        margin: 8px 0;
-      }
-      button {
-        padding: 4px 8px;
-      }
-      textarea {
-        width: 100%;
-        margin: 4px 0;
-        resize: none;
+        padding: 1rem;
       }
     </style>
     <title>User Agent</title>
   </head>
 
   <body>
-    <h3>User Agent</h3>
+    <h3>当前浏览器 UA</h3>
     <hr />
-    <p>当前浏览器 UA</p>
-    <textarea readonly id="ua" rows="5"></textarea>
-    <button onclick="copy()">复制到剪贴板</button>
+    <p><code id="ua"></code></p>
+    <p><button onclick="copy()">复制到剪贴板</button></p>
     <script>
-      const ua = navigator.userAgent;
-      document.getElementById("ua").textContent = ua;
-      function copy() {
-        navigator.clipboard.writeText(ua);
-      }
+      document.getElementById("ua").textContent = navigator.userAgent;
+      const copy = () => navigator.clipboard.writeText(navigator.userAgent);
     </script>
   </body>
 </html>
