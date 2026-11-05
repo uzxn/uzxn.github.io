@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#f5f6f9" />
+<title>运动海报生成器 · 小米运动健康</title>
+<style>
+  :root {
+    --ink: #171a21;
+    --ink-soft: #3e4350;
+    --line-strong: #dfe2ea;
+    --radius-lg: 26px;
+    --shadow: 0 28px 80px rgba(31, 41, 55, 0.10), 0 4px 20px rgba(31, 41, 55, 0.04);
+    --ui-font: "Noto Sans SC", "MiSans", "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    color: var(--ink);
+    font-family: var(--ui-font);
+    background:
+      radial-gradient(1100px 620px at 92% -14%, rgba(255, 154, 98, 0.18), transparent 64%),
+      radial-gradient(900px 600px at -8% 78%, rgba(50, 201, 157, 0.10), transparent 60%),
+      linear-gradient(180deg, #f7f8fb 0%, #f2f4f8 100%);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  button, input, select { font: inherit; }
+  button { -webkit-tap-highlight-color: transparent; }
+  button:focus-visible, input:focus-visible, select:focus-visible {
+    outline: 3px solid rgba(255, 99, 63, 0.28);
+    outline-offset: 2px;
+  }
+
+  .app {
+    width: min(1440px, 100%);
+    margin: 0 auto;
+    padding: 26px 30px 40px;
+  }
+
+  /* ------------------------------------------------------------------ header */
+  .app-header { margin-bottom: 24px; }
+
+  .brand-lockup {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+  }
+
+  .brand-mark {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
+    border-radius: 15px;
+    background: linear-gradient(145deg, #ff8a4d 0%, #ff5c37 55%, #ec4523 100%);
+    box-shadow: 0 8px 22px rgba(240, 81, 42, 0.28), inset 0 1px 0 rgba(255,255,255,.35);
+  }
+  .brand-mark::after {
+    content: "";
+    position: absolute;
+    inset: 7px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.92);
+    border-right-color: transparent;
+    transform: rotate(-28deg);
+  }
+  .brand-mark i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(255,255,255,.16);
+  }
+
+  h1, h2 { margin: 0; font-weight: 700; letter-spacing: -0.02em; }
+
+  .brand-lockup h1 { font-size: 22px; line-height: 1.2; }
+
+  /* ----------------------------------------------------------------- layout */
+  .workspace {
+    display: grid;
+    grid-template-columns: 420px minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+  }
+
+  .panel {
+    min-width: 0;
+    border: 1px solid rgba(255,255,255,.9);
+    border-radius: var(--radius-lg);
+    background: rgba(255,255,255,.86);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(18px);
+  }
+
+  /* ----------------------------------------------------------------- editor */
+  .editor {
+    padding: 24px;
+  }
+
+  .editor h2 { font-size: 24px; line-height: 1.35; }
+
+  .form-section + .form-section {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #eef0f4;
+  }
+
+  .section-heading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 13px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    letter-spacing: .02em;
+  }
+  .section-icon {
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 7px;
+    background: #f4f6fa;
+    color: #8b93a3;
+  }
+  .section-icon svg { width: 13px; height: 13px; }
+
+  .field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 12px;
+  }
+  .field { min-width: 0; }
+  .field.full { grid-column: 1 / -1; }
+
+  .field-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 19px;
+    margin-bottom: 7px;
+    gap: 8px;
+  }
+  .field-label {
+    color: #5c6473;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.4;
+  }
+
+  .auto-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 18px;
+    padding: 0 6px;
+    border-radius: 5px;
+    background: #fff1ec;
+    color: #d96b4d;
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: .02em;
+  }
+  .auto-tag::before {
+    content: "";
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #f08b70;
+  }
+
+  .input-shell {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .input-shell input {
+    width: 100%;
+    height: 44px;
+    padding: 0 13px;
+    border: 1px solid var(--line-strong);
+    border-radius: 12px;
+    background: #fbfcfd;
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1;
+    transition: border-color .17s ease, background .17s ease, box-shadow .17s ease;
+  }
+  .input-shell input::placeholder { color: #b4bac5; font-weight: 400; }
+  .input-shell input:hover { border-color: #cfd4de; }
+  .input-shell input:focus {
+    outline: none;
+    border-color: #ffab92;
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(255,99,63,.09);
+  }
+  .input-shell input[readonly] {
+    color: #5f6776;
+    background: #f5f7fa;
+    cursor: default;
+  }
+  .input-shell .suffix {
+    position: absolute;
+    right: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #a0a7b4;
+    font-size: 11px;
+    font-weight: 500;
+    pointer-events: none;
+  }
+  .input-shell.has-suffix input { padding-right: 42px; }
+  .input-shell .suffix[hidden] { display: none; }
+
+  .select-shell {
+    position: relative;
+  }
+  .select-shell select {
+    width: 100%;
+    height: 44px;
+    padding: 0 38px 0 13px;
+    border: 1px solid var(--line-strong);
+    border-radius: 12px;
+    background: #fbfcfd;
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1;
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    transition: border-color .17s ease, background .17s ease, box-shadow .17s ease;
+  }
+  .select-shell select:hover { border-color: #cfd4de; }
+  .select-shell select:focus {
+    outline: none;
+    border-color: #ffab92;
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(255,99,63,.09);
+  }
+  .select-shell::after {
+    content: "";
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    width: 8px;
+    height: 8px;
+    border-right: 1.5px solid #8b93a3;
+    border-bottom: 1.5px solid #8b93a3;
+    transform: translateY(-70%) rotate(45deg);
+    pointer-events: none;
+  }
+
+  .field-error {
+    display: none;
+    margin-top: 6px;
+    color: #e1493d;
+    font-size: 10.5px;
+    line-height: 1.4;
+  }
+  .field.has-error .input-shell input {
+    border-color: #f1a39b;
+    background: #fffafa;
+  }
+  .field.has-error .field-error { display: block; }
+
+  .field-hint {
+    margin-top: 6px;
+    color: #9aa1ae;
+    font-size: 10px;
+    line-height: 1.45;
+  }
+
+  .form-note {
+    display: flex;
+    gap: 8px;
+    margin-top: 18px;
+    padding: 11px 12px;
+    border-radius: 11px;
+    background: #f7f8fb;
+    color: #8b93a2;
+    font-size: 10.8px;
+    line-height: 1.55;
+  }
+  .form-note svg { width: 14px; height: 14px; flex: 0 0 14px; margin-top: 1px; color: #a9b0bd; }
+
+  .primary-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 44px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #ff8050 0%, #ff5c37 55%, #ef4a26 100%);
+    box-shadow: 0 9px 22px rgba(239, 74, 38, 0.24), inset 0 1px 0 rgba(255,255,255,.22);
+    color: #fff;
+    font-size: 13.5px;
+    font-weight: 600;
+    letter-spacing: .01em;
+    cursor: pointer;
+    transition: transform .16s ease, box-shadow .16s ease, filter .16s ease;
+  }
+  .primary-btn:hover { transform: translateY(-1px); box-shadow: 0 12px 28px rgba(239,74,38,.3); filter: saturate(1.04); }
+  .primary-btn:active { transform: translateY(0); box-shadow: 0 6px 14px rgba(239,74,38,.22); }
+  .primary-btn svg { width: 16px; height: 16px; }
+
+  .editor-actions {
+    margin-top: 20px;
+  }
+  .editor-actions .primary-btn { width: 100%; }
+
+  /* ----------------------------------------------------------------- preview */
+  .preview-panel { padding: 22px; }
+
+  .preview-head h2 {
+    margin: 0 0 17px;
+    font-size: 15px;
+    font-weight: 650;
+    letter-spacing: .01em;
+  }
+
+  .canvas-stage {
+    position: relative;
+    padding: 17px;
+    border-radius: 19px;
+    background:
+      linear-gradient(135deg, rgba(242,244,248,.95), rgba(236,239,245,.88));
+    overflow: hidden;
+  }
+  .canvas-stage::before {
+    content: "";
+    position: absolute;
+    width: 220px;
+    height: 220px;
+    right: -90px;
+    top: -110px;
+    border-radius: 50%;
+    background: rgba(255, 147, 99, .11);
+    filter: blur(8px);
+  }
+  .poster-frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1200 / 800;
+    overflow: hidden;
+    border-radius: 13px;
+    background: #fff;
+    box-shadow:
+      0 22px 45px rgba(31, 41, 55, .16),
+      0 4px 12px rgba(31, 41, 55, .06),
+      0 0 0 1px rgba(255,255,255,.45);
+  }
+  #poster {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* ------------------------------------------------------------------ toast */
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 30px;
+    z-index: 70;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: calc(100vw - 32px);
+    padding: 11px 16px;
+    border-radius: 11px;
+    background: rgba(24, 29, 39, .94);
+    box-shadow: 0 10px 32px rgba(10,18,30,.24);
+    color: #fff;
+    font-size: 12px;
+    line-height: 1.4;
+    opacity: 0;
+    visibility: hidden;
+    transform: translate(-50%, 10px);
+    transition: .22s ease;
+    backdrop-filter: blur(8px);
+  }
+  .toast.show { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
+  .toast svg { width: 15px; height: 15px; flex: 0 0 15px; color: #6fe0b6; }
+
+  /* ------------------------------------------------------------- responsive */
+  @media (max-width: 1120px) {
+    .app { padding: 22px 22px 34px; }
+    .workspace { grid-template-columns: 380px minmax(0, 1fr); gap: 18px; }
+    .editor { padding: 21px; }
+    .preview-panel { padding: 18px; }
+  }
+
+  @media (max-width: 900px) {
+    .workspace { grid-template-columns: 1fr; }
+    .editor { order: 2; }
+    .preview-panel { order: 1; }
+    .editor h2 { font-size: 22px; }
+    .canvas-stage { padding: 12px; }
+    .preview-head h2 { margin-bottom: 14px; }
+  }
+
+  @media (max-width: 560px) {
+    .app { padding: 15px 12px 28px; overflow: hidden; }
+    body { overflow-x: hidden; }
+    .app-header { margin-bottom: 16px; }
+    .brand-lockup { gap: 9px; }
+    .brand-mark { width: 40px; height: 40px; flex-basis: 40px; border-radius: 13px; }
+    .brand-lockup h1 { font-size: 18px; }
+    .editor, .preview-panel { padding: 16px; border-radius: 20px; }
+    .editor h2 { font-size: 21px; }
+    .field-grid { gap: 13px 9px; }
+    .input-shell input { height: 42px; font-size: 13px; padding-left: 11px; }
+    .canvas-stage { padding: 8px; border-radius: 14px; }
+    .poster-frame { border-radius: 9px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: .001ms !important; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="app-header">
+    <div class="brand-lockup">
+      <div class="brand-mark" aria-hidden="true"><i></i></div>
+      <h1>运动海报生成器</h1>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <section class="panel editor" aria-labelledby="editor-heading">
+      <form id="posterForm" novalidate>
+        <section class="form-section" aria-labelledby="section-sport">
+          <div class="section-heading" id="section-sport">
+            <span class="section-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 4a1 1 0 1 0 2 0 1 1 0 0 0-2 0Z"/><path d="m8 21 2.5-6L8 11l-1-4 4-2 3 4 3 1"/><path d="m13 15 2 6"/><path d="m14 9 1 4-3 2"/></svg>
+            </span>
+            <span>运动数据</span>
+          </div>
+
+          <div class="field-grid">
+            <div class="field full" data-field="sport">
+              <div class="field-label-row">
+                <label class="field-label" for="sport">运动类型</label>
+              </div>
+              <div class="select-shell">
+                <select id="sport">
+                  <option value="室内跑步">室内跑步</option>
+                  <option value="健走">健走</option>
+                  <option value="户外骑行" selected>户外骑行</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field" data-field="distance">
+              <div class="field-label-row">
+                <label class="field-label" for="distance">运动距离</label>
+              </div>
+              <div class="input-shell has-suffix">
+                <input id="distance" type="number" inputmode="decimal" min="0.01" max="999.99" step="0.01" value="1.38" placeholder="0.00" />
+                <span class="suffix">公里</span>
+              </div>
+              <p class="field-error">请输入 0.01–999.99 之间的距离</p>
+            </div>
+
+            <div class="field" data-field="duration">
+              <div class="field-label-row">
+                <label class="field-label" for="duration">运动时长</label>
+              </div>
+              <div class="input-shell">
+                <input id="duration" type="text" maxlength="12" value="00:09:55" placeholder="00:09:55" inputmode="numeric" autocomplete="off" />
+              </div>
+              <p class="field-error">格式应为 时:分:秒 或 分:秒</p>
+            </div>
+
+            <div class="field" data-field="calories">
+              <div class="field-label-row">
+                <label class="field-label" for="calories">活动卡路里</label>
+                <span class="auto-tag" title="MET 强度取自 2024 版《成人身体活动能量消耗强度汇编》，按成年男性 70kg 参考体重换算">自动计算</span>
+              </div>
+              <div class="input-shell has-suffix">
+                <input id="calories" type="text" placeholder="—" readonly tabindex="-1" />
+                <span class="suffix">kcal</span>
+              </div>
+              <p class="field-hint">成年男性 70kg · MET 估算</p>
+            </div>
+
+            <div class="field" data-field="metric">
+              <div class="field-label-row">
+                <label class="field-label" for="metric" id="metricLabel">平均速度</label>
+                <span class="auto-tag">自动计算</span>
+              </div>
+              <div class="input-shell has-suffix" id="metricShell">
+                <input id="metric" type="text" value="8.3" placeholder="8.3" readonly tabindex="-1" />
+                <span class="suffix" id="metricUnit">km/h</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="form-section" aria-labelledby="section-profile">
+          <div class="section-heading" id="section-profile">
+            <span class="section-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+            </span>
+            <span>个人信息</span>
+          </div>
+
+          <div class="field-grid">
+            <div class="field full" data-field="name">
+              <div class="field-label-row">
+                <label class="field-label" for="name">昵称</label>
+              </div>
+              <div class="input-shell">
+                <input id="name" type="text" maxlength="24" value="Zhixiang" placeholder="你的昵称" autocomplete="off" />
+              </div>
+              <p class="field-error">请输入昵称</p>
+            </div>
+
+            <div class="field full" data-field="datetime">
+              <div class="field-label-row">
+                <label class="field-label" for="datetime">运动日期与时间</label>
+              </div>
+              <div class="input-shell">
+                <input id="datetime" type="datetime-local" />
+              </div>
+              <p class="field-error">请选择有效的日期和时间</p>
+            </div>
+          </div>
+        </section>
+
+        <div class="form-note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg>
+          <span>配速/速度与卡路里由距离和时长自动计算，图片在本地生成。</span>
+        </div>
+
+        <div class="editor-actions">
+          <button type="submit" class="primary-btn" id="saveBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+            保存 JPG 图片
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel preview-panel" aria-labelledby="preview-heading">
+      <div class="preview-head">
+        <h2 id="preview-heading">实时预览</h2>
+      </div>
+
+      <div class="canvas-stage">
+        <div class="poster-frame">
+          <canvas id="poster" width="1200" height="800" role="img" aria-label="运动数据海报预览"></canvas>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+  <span id="toastText"></span>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  // 单文件海报生成器：表单 → Canvas（1200 × 800）实时预览 → 导出 JPG（同尺寸，质量 0.95）。
+  // 无依赖、无网络请求；配速/速度与活动卡路里由距离与时长自动估算。
+
+  /* --------------------------------------------------------------- constants */
+  const W = 1200;
+  const H = 800;
+  const FONT = '"Noto Sans SC", "MiSans", "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif';
+  const $ = (id) => document.getElementById(id);
+  const canvas = $("poster");
+  const ctx = canvas.getContext("2d");
+
+  const SPORT_RUNNING = "室内跑步";
+  const SPORT_WALKING = "健走";
+  const SPORT_CYCLING = "户外骑行";
+
+  const THEME = {
+    text: "#111214",
+    label: "#898b91",
+    white: "#ffffff",
+    slow: "#95b971",
+    fast: "#c8735b"
+  };
+
+  /* ------------------------------------------------------------- small utils */
+  function pad2(value) {
+    return String(value).padStart(2, "0");
+  }
+
+  function parseDuration(raw) {
+    if (typeof raw !== "string") return NaN;
+    const text = raw.trim().replace(/：/g, ":").replace(/\s+/g, "");
+    if (!text) return NaN;
+
+    if (/^\d{1,3}:\d{1,2}:\d{1,2}$/.test(text)) {
+      const [h, m, s] = text.split(":").map(Number);
+      if (m > 59 || s > 59) return NaN;
+      return h * 3600 + m * 60 + s;
+    }
+    if (/^\d{1,3}:\d{1,2}$/.test(text)) {
+      const [m, s] = text.split(":").map(Number);
+      if (s > 59) return NaN;
+      return m * 60 + s;
+    }
+    if (/^\d+(\.\d+)?$/.test(text)) {
+      return Math.round(Number(text) * 60);
+    }
+    return NaN;
+  }
+
+  function normalizeDuration(raw) {
+    const total = parseDuration(raw);
+    if (!Number.isFinite(total) || total < 0) return null;
+    const hours = Math.floor(total / 3600);
+    const minutes = Math.floor((total % 3600) / 60);
+    const seconds = Math.floor(total % 60);
+    return `${pad2(hours)}:${pad2(minutes)}:${pad2(seconds)}`;
+  }
+
+  function formatPace(totalSeconds) {
+    if (!Number.isFinite(totalSeconds) || totalSeconds < 0) return "—'—\"";
+    const rounded = Math.round(totalSeconds);
+    const minutes = Math.floor(rounded / 60);
+    const seconds = rounded % 60;
+    return `${minutes}'${pad2(seconds)}"`;
+  }
+
+  function paceFromDistance(seconds, distanceKm) {
+    if (!Number.isFinite(seconds) || !Number.isFinite(distanceKm) || seconds <= 0 || distanceKm <= 0) return NaN;
+    return seconds / distanceKm;
+  }
+
+  function speedFromDistance(seconds, distanceKm) {
+    if (!Number.isFinite(seconds) || !Number.isFinite(distanceKm) || seconds <= 0 || distanceKm <= 0) return NaN;
+    return distanceKm / (seconds / 3600);
+  }
+
+  function formatSpeed(speedKmh) {
+    if (!Number.isFinite(speedKmh) || speedKmh <= 0) return "—";
+    return speedKmh.toFixed(1);
+  }
+
+  /* ------------------------------------------------------- energy model (MET)
+   * 能耗按速度换算 MET：MET 取自 2024 版《成人身体活动能量消耗强度汇编》
+   * （Compendium of Physical Activities, Ainsworth 等, pacompendium.com）。
+   * 跑步使用 Running 系列条目（原始测量多在跑台完成），健走使用 Walking 系列
+   * 平地硬质路面条目，骑行使用 Bicycling 系列按速度分档的条目。能耗按 ACSM 代谢公式换算：
+   * kcal/min = MET × 3.5 × 体重(kg) / 200，即每 MET·分钟消耗 0.0175 kcal/kg。
+   * 参考体重取成年男性常用的 70 kg。「活动卡路里」不含静息代谢，因此从总 MET
+   * 中扣除 1 MET。
+   */
+  const REFERENCE_WEIGHT_KG = 70;
+  const RESTING_MET = 1;
+  const KCAL_PER_MET_MINUTE = 0.0175 * REFERENCE_WEIGHT_KG;
+
+  // 室内跑步速度（km/h）→ MET 锚点，锚点之间线性插值。
+  // 6.0 jog/walk 6.0 MET；6.4-6.8 6.5；6.9-7.7 7.8；8.0-8.4 8.5；8.8-9.3 9.0；
+  // 9.7-10.1 9.3；10.8 10.5；11.3 11.0；12.1 11.8；12.9 12.0；13.8 12.5；
+  // 14.5 13.0；15.0-16.1 14.8；17.7 16.8；19.3 18.5；20.9 19.8；22.5 23.0
+  const RUNNING_MET_TABLE = [
+    [6.0, 6.0], [6.6, 6.5], [7.3, 7.8], [8.2, 8.5], [9.0, 9.0], [9.9, 9.3],
+    [10.8, 10.5], [11.3, 11.0], [12.1, 11.8], [12.9, 12.0], [13.8, 12.5],
+    [14.5, 13.0], [15.2, 14.8], [16.1, 14.8], [17.7, 16.8], [19.3, 18.5],
+    [20.9, 19.8], [22.5, 23.0]
+  ];
+
+  // 健走速度（km/h）→ MET 锚点（2024 版 Walking 系列，平地硬质路面条目，原始条目
+  // 按 mph 分档，此处换算为 km/h 并保留分档边界；分档内 MET 相同，故用双锚点表达平台）：
+  // <2.0 mph（<3.2 km/h）2.3 MET（17151）；2.0-2.4 mph（3.2-3.9）2.8（17152）；
+  // 2.5 mph（4.0）3.0（17170）；2.8-3.4 mph（4.5-5.5）3.8（17190）；
+  // 3.5-3.9 mph（5.6-6.3）4.8（17200，brisk）；4.0-4.4 mph（6.4-7.1）5.5（17220）；
+  // 4.5-4.9 mph（7.2-7.9）7.0（17230）；5.0-5.5 mph（8.0-8.8）8.5（17231）
+  const WALKING_MET_TABLE = [
+    [2.0, 2.3], [3.2, 2.8], [3.9, 2.8], [4.0, 3.0], [4.5, 3.8], [5.5, 3.8],
+    [5.6, 4.8], [6.3, 4.8], [6.4, 5.5], [7.1, 5.5], [7.2, 7.0], [7.9, 7.0],
+    [8.0, 8.5], [8.8, 8.5]
+  ];
+
+  // 户外骑行速度（km/h）→ MET 锚点（2024 版 Bicycling 条目，原始条目按 mph 分档，
+  // 此处换算为 km/h）：5.5 mph = 8.85 3.5 MET；9.4 mph = 15.1 5.8；
+  // 10-11.9 mph = 16.1-19.1 6.8；12-13.9 mph = 19.3-22.4 8.0；
+  // 14-15.9 mph = 22.5-25.6 10.0；16-19 mph = 25.7-30.6 12.0；
+  // >20 mph = 32.2 以上 16.8
+  const CYCLING_MET_TABLE = [
+    [8.85, 3.5], [15.1, 5.8], [16.1, 6.8], [19.1, 6.8], [19.3, 8.0],
+    [22.4, 8.0], [22.5, 10.0], [25.6, 10.0], [25.7, 12.0], [30.6, 12.0],
+    [32.2, 16.8]
+  ];
+
+  // 三种运动共用同一套配置结构与算法，不存在主次或默认分支。
+  const SPORT_PROFILES = {
+    [SPORT_RUNNING]: {
+      metricLabel: "平均配速",
+      metricUnit: "",
+      metTable: RUNNING_MET_TABLE,
+      sampleDistance: "2.33",
+      sampleDuration: "00:18:23",
+      metric(seconds, distanceKm) {
+        const secondsPerKm = paceFromDistance(seconds, distanceKm);
+        return { text: formatPace(secondsPerKm), valid: Number.isFinite(secondsPerKm) };
+      }
+    },
+    [SPORT_WALKING]: {
+      metricLabel: "平均配速",
+      metricUnit: "",
+      metTable: WALKING_MET_TABLE,
+      sampleDistance: "2.33",
+      sampleDuration: "00:18:23",
+      metric(seconds, distanceKm) {
+        const secondsPerKm = paceFromDistance(seconds, distanceKm);
+        return { text: formatPace(secondsPerKm), valid: Number.isFinite(secondsPerKm) };
+      }
+    },
+    [SPORT_CYCLING]: {
+      metricLabel: "平均速度",
+      metricUnit: "km/h",
+      metTable: CYCLING_MET_TABLE,
+      sampleDistance: "1.38",
+      sampleDuration: "00:09:55",
+      metric(seconds, distanceKm) {
+        const speedKmh = speedFromDistance(seconds, distanceKm);
+        return { text: formatSpeed(speedKmh), valid: Number.isFinite(speedKmh) };
+      }
+    }
+  };
+
+  function metAtSpeed(speedKmh, table) {
+    if (!Number.isFinite(speedKmh) || speedKmh <= 0) return NaN;
+    if (speedKmh <= table[0][0]) return table[0][1];
+    const last = table[table.length - 1];
+    if (speedKmh >= last[0]) return last[1];
+
+    // Between two anchors: linear interpolation on MET.
+    const index = table.findIndex(([anchorSpeed]) => anchorSpeed > speedKmh);
+    const [leftSpeed, leftMet] = table[index - 1];
+    const [rightSpeed, rightMet] = table[index];
+    return leftMet + ((speedKmh - leftSpeed) / (rightSpeed - leftSpeed)) * (rightMet - leftMet);
+  }
+
+  function estimateActivityCalories(distanceKm, durationSeconds, sport) {
+    if (!Number.isFinite(distanceKm) || distanceKm <= 0) return NaN;
+    const minutes = Number.isFinite(durationSeconds) && durationSeconds > 0 ? durationSeconds / 60 : NaN;
+    if (!Number.isFinite(minutes)) return NaN;
+    const profile = SPORT_PROFILES[sport];
+    if (!profile) return NaN;
+    const met = metAtSpeed(distanceKm / (durationSeconds / 3600), profile.metTable);
+    if (!Number.isFinite(met)) return NaN;
+    const netMet = Math.max(met - RESTING_MET, 0);
+    return Math.round(netMet * KCAL_PER_MET_MINUTE * minutes);
+  }
+
+  function formatDate(value) {
+    if (!value) return "—";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "—";
+    return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()} ${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
+  }
+
+  function formatKilometers(raw) {
+    const number = Number.parseFloat(raw);
+    if (!Number.isFinite(number) || number <= 0) return "0.00";
+    return number.toFixed(2);
+  }
+
+  function sanitizeFilePart(text) {
+    return String(text || "")
+      .replace(/[\\/:*?"<>|\n\r\t]/g, "")
+      .replace(/\s+/g, "")
+      .slice(0, 24) || "运动";
+  }
+
+  function getData() {
+    const sport = $("sport").value;
+    const profile = SPORT_PROFILES[sport];
+    const distance = Number.parseFloat($("distance").value);
+    const durationText = $("duration").value;
+    const durationSeconds = parseDuration(durationText);
+    const metric = profile.metric(durationSeconds, distance);
+    const calories = estimateActivityCalories(distance, durationSeconds, sport);
+
+    return {
+      sport,
+      distance: Number.isFinite(distance) ? distance : 0,
+      distanceText: formatKilometers(distance),
+      durationSeconds,
+      durationText: normalizeDuration(durationText) || "00:00:00",
+      calories: Number.isFinite(calories) ? Math.max(0, calories) : 0,
+      metricText: metric.text,
+      metricValid: metric.valid,
+      metricLabel: profile.metricLabel,
+      metricUnit: profile.metricUnit,
+      name: $("name").value.trim() || "—",
+      datetime: $("datetime").value,
+      dateText: formatDate($("datetime").value)
+    };
+  }
+
+  /* ------------------------------------------------------------- text helpers */
+  function setFont(size, weight = 400) {
+    ctx.font = `${weight} ${size}px ${FONT}`;
+  }
+
+  function measure(text, size, weight = 400) {
+    setFont(size, weight);
+    return ctx.measureText(text).width;
+  }
+
+  function drawText(text, x, y, options = {}) {
+    const {
+      size = 16,
+      weight = 400,
+      color = THEME.text,
+      align = "left",
+      baseline = "alphabetic"
+    } = options;
+
+    setFont(size, weight);
+    ctx.save();
+    ctx.fillStyle = color;
+    ctx.textAlign = align;
+    ctx.textBaseline = baseline;
+    ctx.fillText(text, x, y);
+    ctx.restore();
+    return measure(text, size, weight);
+  }
+
+  /* -------------------------------------------------------------- draw poster */
+  function drawBackground() {
+    ctx.fillStyle = THEME.white;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  function drawHeader(data) {
+    drawText(`小米运动健康丨${data.sport}`, 60, 90, {
+      size: 46,
+      weight: 500,
+      color: "#111214",
+      baseline: "top"
+    });
+  }
+
+  function drawAvatar() {
+    const cx = 1090;
+    const cy = 200;
+    const r = 50;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.clip();
+
+    const bg = ctx.createLinearGradient(cx, cy - r, cx, cy + r);
+    bg.addColorStop(0, "#d4d6dc");
+    bg.addColorStop(1, "#dadbe0");
+    ctx.fillStyle = bg;
+    ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+
+    // White head and shoulders, clipped by the avatar circle.
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.arc(cx, cy - 5, 20, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 54, 36, 36, 0, Math.PI, Math.PI * 2);
+    ctx.fill();
+
+    // A small friendly smile, matching the reference avatar.
+    ctx.fillStyle = "#d7d8dd";
+    ctx.beginPath();
+    ctx.ellipse(cx, cy - 3, 11, 10, 0, 0, Math.PI);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  function drawProfile(data) {
+    drawAvatar();
+
+    const right = 1140;
+    drawText(data.name, right, 320, {
+      size: 40,
+      weight: 400,
+      color: "#9b9ca1",
+      align: "right",
+      baseline: "bottom"
+    });
+
+    drawText(data.dateText, right, 340, {
+      size: 40,
+      weight: 400,
+      color: "#9b9ca1",
+      align: "right",
+      baseline: "top"
+    });
+  }
+
+  function drawDistance(data) {
+    const numberWidth = drawText(data.distanceText, 60, 330, {
+      size: 160,
+      weight: 700,
+      color: "#0e0f11",
+      baseline: "bottom"
+    });
+
+    // The unit sits right after the number, so its x follows the number's width.
+    drawText("公里", 60 + numberWidth + 15, 315, {
+      size: 56,
+      weight: 500,
+      color: "#141518",
+      baseline: "bottom"
+    });
+  }
+
+  function drawSpeedBar() {
+    const x = 140;
+    const y = 473;
+    const width = 920;
+    const height = 14;
+    const radius = height / 2;
+
+    // Slow / fast labels, vertically centred on the bar's centre line (480).
+    drawText("更慢", 60, 480, { size: 30, weight: 500, color: THEME.slow, baseline: "middle" });
+    drawText("更快", 1140, 480, { size: 30, weight: 500, color: THEME.fast, align: "right", baseline: "middle" });
+
+    const gradient = ctx.createLinearGradient(x, 0, x + width, 0);
+    gradient.addColorStop(0.00, "#1fd18f");
+    gradient.addColorStop(0.07, "#28cf87");
+    gradient.addColorStop(0.14, "#52de64");
+    gradient.addColorStop(0.20, "#96e148");
+    gradient.addColorStop(0.27, "#c4e228");
+    gradient.addColorStop(0.33, "#dde611");
+    gradient.addColorStop(0.40, "#ffe603");
+    gradient.addColorStop(0.46, "#fdc307");
+    gradient.addColorStop(0.53, "#fba510");
+    gradient.addColorStop(0.60, "#fe7c1e");
+    gradient.addColorStop(0.66, "#fb552b");
+    gradient.addColorStop(0.73, "#fe5b32");
+    gradient.addColorStop(0.79, "#ff793a");
+    gradient.addColorStop(0.86, "#fe7042");
+    gradient.addColorStop(0.92, "#fe5e3e");
+    gradient.addColorStop(1.00, "#fa4e36");
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(x, y, width, height, radius);
+    ctx.clip();
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(x, y, width, height);
+
+    // A soft top sheen gives the capsule the same subtle depth as the reference.
+    const sheen = ctx.createLinearGradient(0, y, 0, y + height);
+    sheen.addColorStop(0, "rgba(255,255,255,.22)");
+    sheen.addColorStop(0.5, "rgba(255,255,255,0)");
+    sheen.addColorStop(1, "rgba(0,0,0,.035)");
+    ctx.fillStyle = sheen;
+    ctx.fillRect(x, y, width, height);
+    ctx.restore();
+  }
+
+  function drawStats(data) {
+    const columns = [60, 480, 840];
+    const valueBottom = 660;
+    const labelBottom = 710;
+
+    const value = (text, x, color = "#0f1012") =>
+      drawText(text, x, valueBottom, { size: 72, weight: 700, color, baseline: "bottom" });
+    const label = (text, x) =>
+      drawText(text, x, labelBottom, { size: 38, weight: 400, color: THEME.label, baseline: "bottom" });
+
+    // Duration.
+    value(data.durationText, columns[0]);
+    label("运动时长", columns[0]);
+
+    // Calories, with a smaller, softly gray unit sitting on the same bottom line.
+    const calorieWidth = value(String(Math.max(0, Math.round(data.calories))), columns[1], "#111214");
+    drawText("kcal", columns[1] + calorieWidth, 655, {
+      size: 45,
+      weight: 600,
+      color: "#6d6e73",
+      baseline: "bottom"
+    });
+    label("活动卡路里", columns[1]);
+
+    // Average metric: pace or speed, driven entirely by the sport profile.
+    const metricWidth = value(data.metricText, columns[2]);
+    if (data.metricValid && data.metricUnit) {
+      drawText(data.metricUnit, columns[2] + metricWidth, 655, {
+        size: 45,
+        weight: 600,
+        color: "#6d6e73",
+        baseline: "bottom"
+      });
+    }
+    label(data.metricLabel, columns[2]);
+  }
+
+  function render(data) {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    drawBackground();
+    drawHeader(data);
+    drawDistance(data);
+    drawProfile(data);
+    drawSpeedBar();
+    drawStats(data);
+  }
+
+  /* ------------------------------------------------------------------ render */
+  function drawLivePreview() {
+    syncAutoFields();
+    render(getData());
+    canvas.dataset.ready = "true";
+  }
+
+  // 仅导出 JPG：1200 × 800（与画布同尺寸，不再放大），质量 0.95。
+  const EXPORT_META = { mime: "image/jpeg", ext: "jpg", quality: 0.95 };
+
+  function encodePoster() {
+    drawLivePreview();
+    return canvas.toDataURL(EXPORT_META.mime, EXPORT_META.quality);
+  }
+
+  function basicValidate() {
+    const errors = new Map();
+    const name = $("name").value.trim();
+    const distance = Number.parseFloat($("distance").value);
+    const duration = parseDuration($("duration").value);
+    const datetime = $("datetime").value;
+
+    if (!Number.isFinite(distance) || distance <= 0 || distance > 999.99) errors.set("distance", "请输入 0.01–999.99 之间的距离");
+    if (!Number.isFinite(duration) || duration <= 0) errors.set("duration", "请输入有效的运动时长");
+    if (!name) errors.set("name", "请输入昵称");
+    if (!datetime || Number.isNaN(new Date(datetime).getTime())) errors.set("datetime", "请选择有效的日期和时间");
+
+    return errors;
+  }
+
+  function showErrors(errors) {
+    document.querySelectorAll(".field").forEach((field) => {
+      const error = errors.get(field.dataset.field);
+      field.classList.toggle("has-error", Boolean(error));
+      const errorNode = field.querySelector(".field-error");
+      if (error && errorNode) errorNode.textContent = error;
+    });
+  }
+
+  function savePoster() {
+    const data = getData();
+    const errors = basicValidate();
+    if (errors.size) {
+      showErrors(errors);
+      const firstKey = errors.keys().next().value;
+      const firstField = document.querySelector(`.field[data-field="${firstKey}"] input`);
+      if (firstField) {
+        firstField.focus({ preventScroll: false });
+        firstField.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      showToast("请先检查表单中的提示");
+      return;
+    }
+
+    showErrors(new Map());
+    // 画布与导出一致为 1200 × 800，这里直接编码为 JPG 并触发下载。
+    const link = document.createElement("a");
+    link.href = encodePoster();
+    link.download = `小米运动健康_${sanitizeFilePart(data.sport)}_${sanitizeFilePart(data.distanceText)}公里.${EXPORT_META.ext}`;
+    link.rel = "noopener";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    showToast("已开始下载 JPG 图片，请留意浏览器提示");
+  }
+
+  /* -------------------------------------------------------------------- toast */
+  let toastTimer = 0;
+  function showToast(message) {
+    const toast = $("toast");
+    $("toastText").textContent = message;
+    toast.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => toast.classList.remove("show"), 2800);
+  }
+
+  /* ------------------------------------------------------------------- events */
+  function syncAutoFields() {
+    const sport = $("sport").value;
+    const profile = SPORT_PROFILES[sport];
+    const distance = Number.parseFloat($("distance").value);
+    const seconds = parseDuration($("duration").value);
+    const metric = profile.metric(seconds, distance);
+
+    $("metricLabel").textContent = profile.metricLabel;
+    $("metric").value = metric.text;
+    $("metricUnit").textContent = profile.metricUnit;
+    $("metricUnit").hidden = !profile.metricUnit;
+    $("metricShell").classList.toggle("has-suffix", Boolean(profile.metricUnit));
+
+    const kcal = estimateActivityCalories(distance, seconds, sport);
+    $("calories").value = Number.isFinite(kcal) ? String(kcal) : "—";
+  }
+
+  function attachEvents() {
+    const form = $("posterForm");
+    if (!form) return;
+
+    const refresh = (event) => {
+      if (event.type === "change" && event.target.id === "duration") {
+        const normalized = normalizeDuration(event.target.value);
+        if (normalized) event.target.value = normalized;
+      }
+      if (event.type === "change" && event.target.id === "sport") {
+        const profile = SPORT_PROFILES[event.target.value];
+        if (profile) {
+          $("distance").value = profile.sampleDistance;
+          $("duration").value = profile.sampleDuration;
+          ["distance", "duration"].forEach((key) => {
+            document.querySelector(`.field[data-field="${key}"]`)?.classList.remove("has-error");
+          });
+        }
+      }
+      const field = event.target.closest(".field");
+      if (field) field.classList.remove("has-error");
+      if (["distance", "duration"].includes(event.target.id)) syncAutoFields();
+      drawLivePreview();
+    };
+
+    form.addEventListener("input", refresh);
+    form.addEventListener("change", refresh);
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      savePoster();
+    });
+  }
+
+  /* --------------------------------------------------------------------- boot */
+  function boot() {
+    if (!canvas) return;
+
+    // 「运动日期与时间」默认取当前访问/刷新网页的时刻（本地时区，精确到分钟）。
+    const now = new Date();
+    $("datetime").value = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+
+    attachEvents();
+    syncAutoFields();
+    drawLivePreview();
+
+    // Redraw once webfonts are ready so the first paint is never measured against a fallback face.
+    document.fonts?.ready.then(() => drawLivePreview()).catch(() => {});
+    document.fonts?.load?.('700 72px "Noto Sans SC"').then(() => drawLivePreview()).catch(() => {});
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
+})();
+</script>
+</body>
+</html>
