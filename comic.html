@@ -24,32 +24,78 @@
     #reader {
       flex: 1 1 auto;
       min-height: 0;
-      position: relative;
-      overflow: hidden;
+      overflow-y: auto;
+      overflow-x: hidden;
       background: #0a0a0b;
-      cursor: pointer;
+      -webkit-overflow-scrolling: touch;
     }
 
-    #stage {
-      overflow: auto;
+    #pages {
+      width: 100%;
+      max-width: 860px;
+      margin: 0 auto;
     }
 
-    #stage img,
-    #stage canvas {
-      max-width: 100%;
-      max-height: 100%;
-      width: auto;
+    .page {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      /* 占位方块：高 = 宽 */
+      background: #111;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #4a4f58;
+      font-size: 12px;
+      overflow: hidden;
+    }
+
+    .page img {
+      width: 100%;
       height: auto;
       display: block;
     }
 
-    #pageInfo {
-      font-variant-numeric: tabular-nums;
+    body.view-page #pages {
+      display: none;
     }
 
-    #loading {
+    body.view-page #reader {
+      overflow: hidden;
+    }
+
+    #single {
+      display: none;
+      position: relative;
+      width: 100%;
+      max-width: 860px;
+      height: 100%;
+      margin: 0 auto;
+      align-items: center;
+      justify-content: center;
+    }
+
+    body.view-page #single {
+      display: flex;
+    }
+
+    #single img {
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    #singleMsg {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 8px;
+      text-align: center;
+      color: #9aa3b2;
+      font-size: 12px;
       pointer-events: none;
-      z-index: 3;
+    }
+
+    #pageInfo {
+      font-variant-numeric: tabular-nums;
     }
   </style>
 </head>
@@ -68,36 +114,46 @@
           placeholder="作品 ID，例如 1224005" />
       </div>
       <div class="col-auto">
+        <select id="hostSelect" class="form-select w-auto" aria-label="图片分流">
+          <option value="https://cdn-msp3.jmapiproxy1.cc/media/photos/">cdn-msp3.jmapiproxy1.cc</option>
+          <option value="https://cdn-msp2.jmapiproxy1.cc/media/photos/">cdn-msp2.jmapiproxy1.cc</option>
+          <option value="https://cdn-msp.jmapiproxy3.cc/media/photos/">cdn-msp.jmapiproxy3.cc</option>
+          <option value="https://cdn-msp.jmapiproxy1.cc/media/photos/">cdn-msp.jmapiproxy1.cc</option>
+          <option value="https://cdn-msp2.jmdanjonproxy.vip/media/photos/">cdn-msp2.jmdanjonproxy.vip</option>
+          <option value="https://cdn-msp12.jmdanjonproxy.xyz/media/photos/">cdn-msp12.jmdanjonproxy.xyz</option>
+          <option value="https://cdn-msp3.jmapiproxy3.cc/media/photos/">cdn-msp3.jmapiproxy3.cc</option>
+        </select>
+      </div>
+      <div class="col-auto">
+        <select id="viewSelect" class="form-select w-auto" aria-label="视图模式">
+          <option value="scroll">连续滚动</option>
+          <option value="page">单页</option>
+        </select>
+      </div>
+      <div class="col-auto">
         <button class="btn btn-primary" type="submit">阅读</button>
       </div>
     </form>
   </div>
 
-  <div id="reader">
-    <div id="stage" class="w-100 h-100 d-flex align-items-center justify-content-center">
-      <div class="text-secondary text-center px-4">
-        输入作品 ID 后点「阅读」<br />
-        左右方向键或点击左右两侧翻页
-      </div>
+  <main id="reader">
+    <div id="pages"></div>
+    <div id="single">
+      <img id="singleImg" alt="" />
+      <div id="singleMsg"></div>
     </div>
-
-    <div id="loading" class="position-absolute top-50 start-50 translate-middle d-none">
-      <div class="spinner-border text-primary" role="status"></div>
-    </div>
-  </div>
+  </main>
 
   <footer class="bg-dark border-top border-secondary-subtle py-2">
-    <div class="container-fluid d-flex align-items-center justify-content-between">
-      <button id="prevBtn" class="btn btn-outline-light btn-sm" type="button" disabled>上一页</button>
-      <span id="pageInfo" class="text-secondary small">- / -</span>
-      <button id="nextBtn" class="btn btn-outline-light btn-sm" type="button" disabled>下一页</button>
+    <div class="container-fluid d-flex align-items-center justify-content-center gap-3">
+      <button id="prevBtn" class="btn btn-outline-light btn-sm d-none" type="button">上一页</button>
+      <span id="pageInfo" class="text-secondary small" aria-live="polite">- / -</span>
+      <button id="nextBtn" class="btn btn-outline-light btn-sm d-none" type="button">下一页</button>
     </div>
   </footer>
 
   <script>
-    const HOST = "https://cdn-msp3.jm18c-kimi.net/media/photos/";
-
-    /* ================= MD5（只用于算切片数） ================= */
+    /* ================= MD5（切片数与 API token） ================= */
     function md5(str) {
       const bytes = [];
       for (let i = 0; i < str.length; i++) {
@@ -149,8 +205,122 @@
       return hx(a0) + hx(b0) + hx(c0) + hx(d0);
     }
 
+    /* ================= AES-256 ECB 解密（/chapter 的 data） ================= */
+    const AES = (() => {
+      const sbox = new Uint8Array(256);
+      const invSbox = new Uint8Array(256);
+
+      function gmul(a, b) {
+        let p = 0;
+        for (let i = 0; i < 8; i++) {
+          if (b & 1) p ^= a;
+          const hi = a & 0x80;
+          a = (a << 1) & 0xff;
+          if (hi) a ^= 0x1b;
+          b >>= 1;
+        }
+        return p;
+      }
+
+      function rotl8(x, n) {
+        return ((x << n) | (x >>> (8 - n))) & 0xff;
+      }
+
+      for (let i = 0; i < 256; i++) {
+        let inv = 0;
+        if (i !== 0) {
+          inv = 1;
+          let base = i;
+          let e = 254;
+          while (e) {
+            if (e & 1) inv = gmul(inv, base);
+            base = gmul(base, base);
+            e >>= 1;
+          }
+        }
+        const s = (inv ^ rotl8(inv, 1) ^ rotl8(inv, 2) ^ rotl8(inv, 3) ^ rotl8(inv, 4) ^ 0x63) & 0xff;
+        sbox[i] = s;
+        invSbox[s] = i;
+      }
+
+      function expandKey(key) {
+        const Nk = 8;
+        const Nr = 14;
+        const w = [];
+        for (let i = 0; i < Nk; i++) w.push(Array.from(key.slice(i * 4, i * 4 + 4)));
+        let rcon = 1;
+        for (let i = Nk; i < 4 * (Nr + 1); i++) {
+          let t = w[i - 1].slice();
+          if (i % Nk === 0) {
+            t = [t[1], t[2], t[3], t[0]];
+            t = t.map((b) => sbox[b]);
+            t[0] ^= rcon;
+            rcon = gmul(rcon, 2);
+          } else if (i % Nk === 4) {
+            t = t.map((b) => sbox[b]);
+          }
+          w.push(w[i - Nk].map((b, j) => b ^ t[j]));
+        }
+        return { w, Nr };
+      }
+
+      function addRoundKey(st, w, round) {
+        for (let c = 0; c < 4; c++) {
+          for (let r = 0; r < 4; r++) st[r + 4 * c] ^= w[round * 4 + c][r];
+        }
+      }
+
+      function invShiftRows(st) {
+        for (let r = 1; r < 4; r++) {
+          const row = [st[r], st[r + 4], st[r + 8], st[r + 12]];
+          for (let c = 0; c < 4; c++) st[r + 4 * ((c + r) % 4)] = row[c];
+        }
+      }
+
+      function invMixColumns(st) {
+        for (let c = 0; c < 4; c++) {
+          const i = 4 * c;
+          const a0 = st[i], a1 = st[i + 1], a2 = st[i + 2], a3 = st[i + 3];
+          st[i] = gmul(a0, 14) ^ gmul(a1, 11) ^ gmul(a2, 13) ^ gmul(a3, 9);
+          st[i + 1] = gmul(a0, 9) ^ gmul(a1, 14) ^ gmul(a2, 11) ^ gmul(a3, 13);
+          st[i + 2] = gmul(a0, 13) ^ gmul(a1, 9) ^ gmul(a2, 14) ^ gmul(a3, 11);
+          st[i + 3] = gmul(a0, 11) ^ gmul(a1, 13) ^ gmul(a2, 9) ^ gmul(a3, 14);
+        }
+      }
+
+      function decryptBlock(block, ks) {
+        const st = Array.from(block);
+        addRoundKey(st, ks.w, ks.Nr);
+        for (let round = ks.Nr - 1; round >= 1; round--) {
+          invShiftRows(st);
+          for (let i = 0; i < 16; i++) st[i] = invSbox[st[i]];
+          addRoundKey(st, ks.w, round);
+          invMixColumns(st);
+        }
+        invShiftRows(st);
+        for (let i = 0; i < 16; i++) st[i] = invSbox[st[i]];
+        addRoundKey(st, ks.w, 0);
+        return st;
+      }
+
+      return {
+        decryptEcb(bytes, key) {
+          const ks = expandKey(key);
+          const out = new Uint8Array(bytes.length);
+          for (let off = 0; off < bytes.length; off += 16) {
+            const dec = decryptBlock(bytes.subarray(off, off + 16), ks);
+            out.set(dec, off);
+          }
+          const pad = out[out.length - 1];
+          if (pad >= 1 && pad <= 16) return out.subarray(0, out.length - pad);
+          return out;
+        },
+      };
+    })();
+
     /* ================= 切片数 ================= */
     function getNum(aid, filename) {
+      if (aid < 220980) return 0;
       if (aid < 268850) return 10;
       const x = aid < 421926 ? 10 : 8;
       const digest = md5(String(aid) + filename);
@@ -179,120 +349,334 @@
       return canvas;
     }
 
-    /* ================= 元素 ================= */
+    /* ================= 官方 API：完整图片列表 ================= */
+    const API_HOSTS = [
+      "https://www.cdnbtd.cc",
+      "https://www.cdnutc.cc",
+      "https://www.cdngwc.net",
+      "https://www.cdngwc.club",
+    ];
+    const API_TOKEN_SECRET = "185Hcomic3PAPP7R";
+    const API_VERSION = "2.1.13";
+    let apiHost = null;
+
+    async function fetchChapterImages(aid) {
+      let lastError = null;
+      const hosts = apiHost ? [apiHost, ...API_HOSTS.filter((h) => h !== apiHost)] : API_HOSTS;
+      for (const host of hosts) {
+        try {
+          const ts = Math.floor(Date.now() / 1000);
+          const token = md5(String(ts) + API_TOKEN_SECRET);
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 8000);
+          try {
+            const res = await fetch(host + "/chapter?id=" + aid + "&v=" + ts, {
+              signal: controller.signal,
+              headers: { token, tokenparam: ts + "," + API_VERSION },
+            });
+            if (!res.ok) throw new Error("API HTTP " + res.status);
+            const json = await res.json();
+            if (!json || json.code !== 200 || typeof json.data !== "string") throw new Error("API 数据异常");
+            const bin = Uint8Array.from(atob(json.data), (c) => c.charCodeAt(0));
+            const key = new TextEncoder().encode(md5(String(ts) + API_TOKEN_SECRET));
+            const plain = AES.decryptEcb(bin, key);
+            const obj = JSON.parse(new TextDecoder().decode(plain));
+            if (!Array.isArray(obj.images) || !obj.images.length) throw new Error("images 为空");
+            apiHost = host;
+            return obj.images;
+          } finally {
+            clearTimeout(timer);
+          }
+        } catch (e) {
+          lastError = e;
+        }
+      }
+      throw lastError || new Error("API 不可用");
+    }
+
+    /* ================= 元素 & 状态 ================= */
     const $ = (id) => document.getElementById(id);
-    const stage = $("stage");
     const reader = $("reader");
-    const loading = $("loading");
+    const pagesEl = $("pages");
     const pageInfo = $("pageInfo");
+    const aidInput = $("aid");
+    const hostSelect = $("hostSelect");
+    const viewSelect = $("viewSelect");
     const prevBtn = $("prevBtn");
     const nextBtn = $("nextBtn");
-    const aidInput = $("aid");
+    const singleImg = $("singleImg");
+    const singleMsg = $("singleMsg");
 
     const state = {
       aid: 0,
+      images: null,
+      mode: "scroll",
+      blocks: [],
+      imageCache: new Map(), // page -> { url, w, h, revoke }
+      imageLoading: new Map(), // page -> Promise
+      observer: null,
       cur: 0,
-      max: 0,
-      cache: new Map(),
       seq: 0,
+      singleSeq: 0,
     };
 
     const pad5 = (n) => String(n).padStart(5, "0");
-    const pageUrl = (p, aid = state.aid) => HOST + aid + "/" + pad5(p) + ".webp";
-
-    function setStage(node) {
-      stage.replaceChildren();
-      if (typeof node === "string") stage.innerHTML = node;
-      else if (node) stage.appendChild(node);
-    }
-
-    function setLoading(on) {
-      loading.classList.toggle("d-none", !on);
-    }
-
-    function updateBar() {
-      pageInfo.textContent = (state.cur || "-") + " / " + (state.max || "?");
-      prevBtn.disabled = state.cur <= 1;
-      nextBtn.disabled = !state.cur || (state.max > 0 && state.cur >= state.max);
-    }
+    const pageName = (p) => (state.images && state.images[p - 1]) || pad5(p) + ".webp";
 
     const loadImage = (url) =>
       new Promise((resolve, reject) => {
         const img = new Image();
+        img.crossOrigin = "anonymous";
         img.onload = () => resolve(img);
         img.onerror = () => reject(new Error(url));
         img.src = url;
       });
 
-    async function getPage(page) {
-      const aid = state.aid;
-      const key = aid + ":" + page;
-      if (state.cache.has(key)) return state.cache.get(key);
-      const img = await loadImage(pageUrl(page, aid));
-      const canvas = decodeToCanvas(img, getNum(aid, pad5(page)));
-      const item = { el: canvas || img };
-      state.cache.set(key, item);
-      return item;
+    const canvasToUrl = (canvas) =>
+      new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => {
+          if (!blob) reject(new Error("toBlob failed"));
+          else resolve(URL.createObjectURL(blob));
+        }, "image/png");
+      });
+
+    function setPageInfo(cur, total) {
+      pageInfo.textContent = (cur || "-") + " / " + (total || "?");
     }
 
-    async function show(page) {
-      const seq = ++state.seq;
-      setLoading(true);
-      try {
-        const item = await getPage(page);
-        if (seq !== state.seq || page !== state.cur) return;
-        setStage(item.el);
-        updateBar();
-        if (state.max === 0 || page < state.max) getPage(page + 1).catch(() => { });
-      } catch (e) {
-        if (seq !== state.seq) return;
-        if (page === 1) {
-          setStage('<div class="alert alert-danger m-3">第 1 页加载失败，请检查 ID。</div>');
-          state.cur = 1;
-          state.max = 1;
+    function updateFooter() {
+      const isPage = state.mode === "page";
+      const total = state.images ? state.images.length : 0;
+      prevBtn.classList.toggle("d-none", !isPage);
+      nextBtn.classList.toggle("d-none", !isPage);
+      prevBtn.disabled = !isPage || state.cur <= 1;
+      nextBtn.disabled = !isPage || !total || state.cur >= total;
+    }
+
+    function applyMode() {
+      document.body.classList.toggle("view-page", state.mode === "page");
+      updateFooter();
+    }
+
+    function clearAll() {
+      state.singleSeq++;
+      if (state.observer) {
+        state.observer.disconnect();
+        state.observer = null;
+      }
+      // 先移除 DOM，再释放 blob，避免画面瞬间变空
+      pagesEl.replaceChildren();
+      singleImg.removeAttribute("src");
+      singleMsg.textContent = "";
+      for (const item of state.imageCache.values()) {
+        if (item.revoke) URL.revokeObjectURL(item.url);
+      }
+      state.imageCache.clear();
+      state.imageLoading.clear();
+      state.blocks = [];
+      state.images = null;
+      state.cur = 0;
+      setPageInfo(0, 0);
+      updateFooter();
+    }
+
+    async function getPageImage(page) {
+      if (state.imageCache.has(page)) return state.imageCache.get(page);
+      if (state.imageLoading.has(page)) return state.imageLoading.get(page);
+
+      const aid = state.aid;
+      const name = pageName(page);
+      const base = name.replace(/\.[^.]+$/, "");
+      const promise = (async () => {
+        const img = await loadImage(hostSelect.value + aid + "/" + name);
+        const canvas = decodeToCanvas(img, getNum(aid, base));
+
+        let url, w, h, revoke = false;
+        if (canvas) {
+          url = await canvasToUrl(canvas);
+          revoke = true;
+          w = canvas.width;
+          h = canvas.height;
         } else {
-          state.max = page - 1;
-          state.cur = state.max;
-          const cached = state.cache.get(state.aid + ":" + state.cur);
-          if (cached) setStage(cached.el);
-          else setStage('<div class="alert alert-danger m-3">没有可显示的页面。</div>');
+          url = img.src;
+          w = img.naturalWidth;
+          h = img.naturalHeight;
         }
-        updateBar();
+
+        if (aid !== state.aid) {
+          if (revoke) URL.revokeObjectURL(url);
+          throw new Error("stale");
+        }
+
+        const item = { url, w, h, revoke };
+        state.imageCache.set(page, item);
+        return item;
+      })();
+
+      state.imageLoading.set(page, promise);
+      try {
+        return await promise;
       } finally {
-        if (seq === state.seq) setLoading(false);
+        if (state.imageLoading.get(page) === promise) state.imageLoading.delete(page);
       }
     }
 
-    function gotoPage(page) {
-      if (!state.aid || page < 1) return;
-      if (state.max && page > state.max) return;
+    async function loadPage(page, block) {
+      if (block.dataset.loading === "1" || block.querySelector("img")) return;
+      block.dataset.loading = "1";
+      if (block.dataset.failed === "1") {
+        block.dataset.failed = "";
+        block.textContent = "";
+      }
+      try {
+        const item = await getPageImage(page);
+        if (!block.isConnected) return;
+        const el = document.createElement("img");
+        el.src = item.url;
+        el.alt = "第 " + page + " 页";
+        block.style.aspectRatio = item.w + " / " + item.h;
+        block.replaceChildren(el);
+        schedulePageUpdate();
+      } catch (e) {
+        if (block.isConnected) {
+          block.dataset.failed = "1";
+          block.textContent = "加载失败";
+        }
+      } finally {
+        delete block.dataset.loading;
+      }
+    }
+
+    async function showSingle(page) {
+      if (!state.images) return;
+      const total = state.images.length;
+      if (page < 1 || page > total) return;
       state.cur = page;
-      updateBar();
-      show(page);
+      setPageInfo(page, total);
+      updateFooter();
+      const seq = ++state.singleSeq;
+      singleMsg.textContent = "加载中…";
+      try {
+        const item = await getPageImage(page);
+        if (seq !== state.singleSeq || state.mode !== "page" || state.cur !== page) return;
+        singleImg.src = item.url;
+        singleImg.alt = "第 " + page + " 页";
+        singleMsg.textContent = "";
+      } catch (e) {
+        if (seq !== state.singleSeq) return;
+        singleImg.removeAttribute("src");
+        singleMsg.textContent = "加载失败，可切换图片分流重试";
+      }
     }
 
-    function parseInput(raw) {
-      const text = String(raw || "").trim();
-      if (!text) return 0;
-      const inUrl = text.match(/\/photos\/(\d+)/i);
-      if (inUrl) return parseInt(inUrl[1], 10);
-      if (/^\d+$/.test(text)) return parseInt(text, 10);
-      const digits = text.match(/(\d{2,})/);
-      return digits ? parseInt(digits[1], 10) : 0;
+    function scrollToPage(page) {
+      const block = state.blocks[page - 1];
+      if (!block) return;
+      const top = block.getBoundingClientRect().top - reader.getBoundingClientRect().top + reader.scrollTop;
+      reader.scrollTop = Math.max(0, top);
     }
 
-    function start() {
-      const aid = parseInput(aidInput.value);
-      if (!aid) {
+    function onIntersect(entries) {
+      if (state.mode !== "scroll") return;
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        const page = Number(entry.target.dataset.page);
+        loadPage(page, entry.target);
+      }
+    }
+
+    let pageRaf = 0;
+
+    function schedulePageUpdate() {
+      if (pageRaf) return;
+      pageRaf = requestAnimationFrame(() => {
+        pageRaf = 0;
+        updateCurrentPage();
+      });
+    }
+
+    // 可见面积最大的页面作为当前页
+    function updateCurrentPage() {
+      if (state.mode !== "scroll" || !state.blocks.length || !state.images) return;
+      const r = reader.getBoundingClientRect();
+      let best = 0;
+      let bestArea = 0;
+      for (const block of state.blocks) {
+        const b = block.getBoundingClientRect();
+        const top = Math.max(b.top, r.top);
+        const bottom = Math.min(b.bottom, r.bottom);
+        const area = Math.max(0, bottom - top) * b.width;
+        if (area > bestArea) {
+          bestArea = area;
+          best = Number(block.dataset.page);
+        }
+      }
+      if (best > 0) {
+        state.cur = best;
+        setPageInfo(best, state.images.length);
+        updateFooter();
+      }
+    }
+
+    async function start() {
+      const text = String(aidInput.value || "").trim();
+      const m = text.match(/\/photos\/(\d+)/i) || text.match(/^(\d+)$/) || text.match(/(\d{2,})/);
+      if (!m) {
         aidInput.focus();
         return;
       }
+      const aid = parseInt(m[1], 10);
+      const seq = ++state.seq;
+      state.mode = viewSelect.value;
+
+      clearAll();
       state.aid = aid;
-      state.cur = 0;
-      state.max = 0;
-      state.cache.clear();
-      state.seq++;
-      gotoPage(1);
+      setPageInfo(0, 0);
+      pageInfo.textContent = "加载中…";
+
+      let images;
+      try {
+        images = await fetchChapterImages(aid);
+      } catch (e) {
+        if (seq !== state.seq) return;
+        pagesEl.innerHTML = '<div class="alert alert-danger m-3">获取页数失败，请检查网络或稍后重试。</div>';
+        singleMsg.textContent = "获取页数失败";
+        setPageInfo(0, 0);
+        applyMode();
+        return;
+      }
+      if (seq !== state.seq) return;
+
+      state.images = images;
+      const total = images.length;
+
+      const blocks = [];
+      for (let p = 1; p <= total; p++) {
+        const block = document.createElement("div");
+        block.className = "page";
+        block.dataset.page = String(p);
+        blocks.push(block);
+        pagesEl.appendChild(block);
+      }
+      state.blocks = blocks;
+
+      state.observer = new IntersectionObserver(onIntersect, {
+        root: reader,
+        rootMargin: "100% 0px",
+        threshold: [0, 0.01, 0.25, 0.5, 0.75, 1],
+      });
+      for (const block of blocks) state.observer.observe(block);
+
+      state.cur = 1;
+      applyMode();
+      if (state.mode === "page") {
+        showSingle(1);
+      } else {
+        reader.scrollTop = 0;
+        setPageInfo(1, total);
+        schedulePageUpdate();
+      }
+      updateFooter();
     }
 
     $("loadForm").addEventListener("submit", (e) => {
@@ -300,29 +684,47 @@
       start();
     });
 
-    prevBtn.addEventListener("click", () => gotoPage(state.cur - 1));
-    nextBtn.addEventListener("click", () => gotoPage(state.cur + 1));
-
-    reader.addEventListener("click", (e) => {
-      if (!state.aid || e.target.closest(".alert")) return;
-      const rect = reader.getBoundingClientRect();
-      if (!rect.width) return;
-      if (e.clientX - rect.left < rect.width / 2) gotoPage(state.cur - 1);
-      else gotoPage(state.cur + 1);
-    });
-
-    document.addEventListener("keydown", (e) => {
-      if (e.target instanceof HTMLInputElement) return;
-      if (e.key === "ArrowLeft" || e.key === "PageUp") {
-        e.preventDefault();
-        gotoPage(state.cur - 1);
-      } else if (e.key === "ArrowRight" || e.key === "PageDown") {
-        e.preventDefault();
-        gotoPage(state.cur + 1);
+    // 视图切换：连续滚动 / 单页
+    viewSelect.addEventListener("change", () => {
+      state.mode = viewSelect.value;
+      if (!state.images) {
+        applyMode();
+        return;
+      }
+      applyMode();
+      if (state.mode === "page") {
+        showSingle(state.cur || 1);
+      } else {
+        state.singleSeq++;
+        const cur = state.cur || 1;
+        requestAnimationFrame(() => {
+          scrollToPage(cur);
+          if (state.images) {
+            const from = Math.max(1, cur - 1);
+            const to = Math.min(state.images.length, cur + 1);
+            for (let p = from; p <= to; p++) loadPage(p, state.blocks[p - 1]);
+          }
+          schedulePageUpdate();
+        });
       }
     });
 
-    updateBar();
+    prevBtn.addEventListener("click", () => {
+      if (state.mode === "page") showSingle(state.cur - 1);
+    });
+    nextBtn.addEventListener("click", () => {
+      if (state.mode === "page") showSingle(state.cur + 1);
+    });
+
+    reader.addEventListener("scroll", schedulePageUpdate, { passive: true });
+
+    // 切换图片分流：已加载的页面保留，失败的页面重试
+    hostSelect.addEventListener("change", () => {
+      for (const block of state.blocks) {
+        if (block.dataset.failed === "1") loadPage(Number(block.dataset.page), block);
+      }
+      if (state.mode === "page" && state.cur) showSingle(state.cur);
+    });
   </script>
 </body>
 
