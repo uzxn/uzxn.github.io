@@ -2,7 +2,7 @@
 
 单文件静态漫画阅读器：输入章节图片 ID，连续滚动或单页阅读，自动还原 JM 的切片打乱图，页数来自官方 API，API 与图片域名都支持失败自动切换。
 
-- 入口文件：`comic.html`
+- 入口文件：`index.html`
 - 无构建、无后端、无框架（只引 Bootstrap 5 CSS）
 - 目标浏览器：现代 Chromium / Edge（用到 `IntersectionObserver`、`AbortController`、`canvas.toBlob("image/webp")`、`URL.createObjectURL`）
 
@@ -10,7 +10,7 @@
 
 ## 1. 快速开始
 
-1. 打开 `comic.html`（本地 `file://` 或任意静态托管均可）。
+1. 打开 `index.html`（本地 `file://` 或任意静态托管均可）。
 2. 输入章节图片 ID，例如 `1224005`，点「阅读」。
 3. 默认「连续滚动」；切到「单页」后底部出现上一页/下一页。
 
@@ -25,8 +25,8 @@
 ## 2. 目录与部署
 
 ```
-comic.html      # 全部代码（HTML + CSS + JS）
-comic.md        # 本文档
+index.html      # 全部代码（HTML + CSS + JS）
+README.md        # 本文档
 ```
 
 直接静态托管即可，没有构建步骤。Bootstrap 只用了 CSS：
