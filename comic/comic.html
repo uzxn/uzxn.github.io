@@ -114,17 +114,6 @@
           placeholder="作品 ID，例如 1224005" />
       </div>
       <div class="col-auto">
-        <select id="hostSelect" class="form-select w-auto" aria-label="图片分流">
-          <option value="https://cdn-msp3.jmapiproxy1.cc/media/photos/">cdn-msp3.jmapiproxy1.cc</option>
-          <option value="https://cdn-msp2.jmapiproxy1.cc/media/photos/">cdn-msp2.jmapiproxy1.cc</option>
-          <option value="https://cdn-msp.jmapiproxy3.cc/media/photos/">cdn-msp.jmapiproxy3.cc</option>
-          <option value="https://cdn-msp.jmapiproxy1.cc/media/photos/">cdn-msp.jmapiproxy1.cc</option>
-          <option value="https://cdn-msp2.jmdanjonproxy.vip/media/photos/">cdn-msp2.jmdanjonproxy.vip</option>
-          <option value="https://cdn-msp12.jmdanjonproxy.xyz/media/photos/">cdn-msp12.jmdanjonproxy.xyz</option>
-          <option value="https://cdn-msp3.jmapiproxy3.cc/media/photos/">cdn-msp3.jmapiproxy3.cc</option>
-        </select>
-      </div>
-      <div class="col-auto">
         <select id="viewSelect" class="form-select w-auto" aria-label="视图模式">
           <option value="scroll">连续滚动</option>
           <option value="page">单页</option>
@@ -400,7 +389,6 @@
     const pagesEl = $("pages");
     const pageInfo = $("pageInfo");
     const aidInput = $("aid");
-    const hostSelect = $("hostSelect");
     const viewSelect = $("viewSelect");
     const prevBtn = $("prevBtn");
     const nextBtn = $("nextBtn");
@@ -412,8 +400,9 @@
       images: null,
       mode: "scroll",
       blocks: [],
-      imageCache: new Map(), // page -> { url, w, h, revoke }
+      imageCache: new Map(), // page -> { url, revoke, size }
       imageLoading: new Map(), // page -> Promise
+      meta: new Map(), // page -> { w, h }，淘汰后仍保留宽高比
       observer: null,
       cur: 0,
       seq: 0,
@@ -422,6 +411,18 @@
 
     const pad5 = (n) => String(n).padStart(5, "0");
     const pageName = (p) => (state.images && state.images[p - 1]) || pad5(p) + ".webp";
+
+    // 图片分流：请求失败自动切到下一个
+    const IMAGE_HOSTS = [
+      "https://cdn-msp3.jmapiproxy1.cc/media/photos/",
+      "https://cdn-msp2.jmapiproxy1.cc/media/photos/",
+      "https://cdn-msp.jmapiproxy3.cc/media/photos/",
+      "https://cdn-msp.jmapiproxy1.cc/media/photos/",
+      "https://cdn-msp2.jmdanjonproxy.vip/media/photos/",
+      "https://cdn-msp12.jmdanjonproxy.xyz/media/photos/",
+      "https://cdn-msp3.jmapiproxy3.cc/media/photos/",
+    ];
+    let imageHost = 0;
 
     const loadImage = (url) =>
       new Promise((resolve, reject) => {
@@ -432,12 +433,31 @@
         img.src = url;
       });
 
+    async function loadImageWithHosts(aid, name) {
+      let lastError = null;
+      for (let i = 0; i < IMAGE_HOSTS.length; i++) {
+        const idx = (imageHost + i) % IMAGE_HOSTS.length;
+        try {
+          const img = await loadImage(IMAGE_HOSTS[idx] + aid + "/" + name);
+          imageHost = idx; // 记住本次可用的图片域名
+          return img;
+        } catch (e) {
+          lastError = e;
+        }
+      }
+      throw lastError || new Error("图片加载失败");
+    }
+
     const canvasToUrl = (canvas) =>
       new Promise((resolve, reject) => {
-        canvas.toBlob((blob) => {
-          if (!blob) reject(new Error("toBlob failed"));
-          else resolve(URL.createObjectURL(blob));
-        }, "image/png");
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) reject(new Error("toBlob failed"));
+            else resolve({ url: URL.createObjectURL(blob), size: blob.size });
+          },
+          "image/webp",
+          0.95
+        );
       });
 
     function setPageInfo(cur, total) {
@@ -473,11 +493,67 @@
       }
       state.imageCache.clear();
       state.imageLoading.clear();
+      state.meta.clear();
       state.blocks = [];
       state.images = null;
       state.cur = 0;
       setPageInfo(0, 0);
       updateFooter();
+    }
+
+    // ===== 缓存上限与淘汰 =====
+    const CACHE_MAX_PAGES = 30;
+    const CACHE_MAX_BYTES = 64 * 1024 * 1024;
+    const KEEP_BACK = 8;
+    const KEEP_AHEAD = 12;
+
+    function cacheBytes() {
+      let total = 0;
+      for (const item of state.imageCache.values()) total += item.size || 0;
+      return total;
+    }
+
+    function isPinnedPage(page) {
+      if (page === state.cur) return true;
+      if (state.imageLoading.has(page)) return true;
+      const block = state.blocks[page - 1];
+      return !!(block && block.dataset.loading === "1");
+    }
+
+    // 距离窗口内的页保留；超出页数/字节上限时，从离当前页最远的开始淘汰
+    function maybeEvict() {
+      if (!state.images) return;
+      const cur = state.cur || 1;
+      const lo = cur - KEEP_BACK;
+      const hi = cur + KEEP_AHEAD;
+
+      const candidates = [];
+      for (const page of state.imageCache.keys()) {
+        if (page >= lo && page <= hi) continue;
+        if (isPinnedPage(page)) continue;
+        candidates.push(page);
+      }
+
+      let count = state.imageCache.size;
+      let bytes = cacheBytes();
+      if (count <= CACHE_MAX_PAGES && bytes <= CACHE_MAX_BYTES) return;
+
+      candidates.sort((a, b) => Math.abs(b - cur) - Math.abs(a - cur));
+      for (const page of candidates) {
+        if (count <= CACHE_MAX_PAGES && bytes <= CACHE_MAX_BYTES) break;
+        const item = state.imageCache.get(page);
+        if (!item) continue;
+        if (item.revoke) URL.revokeObjectURL(item.url);
+        const block = state.blocks[page - 1];
+        if (block) {
+          const meta = state.meta.get(page);
+          if (meta) block.style.aspectRatio = meta.w + " / " + meta.h;
+          block.replaceChildren();
+        }
+        state.imageCache.delete(page);
+        count--;
+        bytes -= item.size || 0;
+      }
     }
 
     async function getPageImage(page) {
@@ -488,12 +564,14 @@
       const name = pageName(page);
       const base = name.replace(/\.[^.]+$/, "");
       const promise = (async () => {
-        const img = await loadImage(hostSelect.value + aid + "/" + name);
+        const img = await loadImageWithHosts(aid, name);
         const canvas = decodeToCanvas(img, getNum(aid, base));
 
-        let url, w, h, revoke = false;
+        let url, size = 0, w, h, revoke = false;
         if (canvas) {
-          url = await canvasToUrl(canvas);
+          const res = await canvasToUrl(canvas);
+          url = res.url;
+          size = res.size;
           revoke = true;
           w = canvas.width;
           h = canvas.height;
@@ -508,7 +586,8 @@
           throw new Error("stale");
         }
 
-        const item = { url, w, h, revoke };
+        state.meta.set(page, { w, h });
+        const item = { url, revoke, size, w, h };
         state.imageCache.set(page, item);
         return item;
       })();
@@ -536,6 +615,7 @@
         el.alt = "第 " + page + " 页";
         block.style.aspectRatio = item.w + " / " + item.h;
         block.replaceChildren(el);
+        maybeEvict();
         schedulePageUpdate();
       } catch (e) {
         if (block.isConnected) {
@@ -562,10 +642,12 @@
         singleImg.src = item.url;
         singleImg.alt = "第 " + page + " 页";
         singleMsg.textContent = "";
+        maybeEvict();
+        if (page < total) getPageImage(page + 1).then(maybeEvict).catch(() => { });
       } catch (e) {
         if (seq !== state.singleSeq) return;
         singleImg.removeAttribute("src");
-        singleMsg.textContent = "加载失败，可切换图片分流重试";
+        singleMsg.textContent = "加载失败，请稍后重试";
       }
     }
 
@@ -611,10 +693,11 @@
           best = Number(block.dataset.page);
         }
       }
-      if (best > 0) {
+      if (best > 0 && best !== state.cur) {
         state.cur = best;
         setPageInfo(best, state.images.length);
         updateFooter();
+        maybeEvict();
       }
     }
 
@@ -696,6 +779,8 @@
         showSingle(state.cur || 1);
       } else {
         state.singleSeq++;
+        singleImg.removeAttribute("src");
+        singleMsg.textContent = "";
         const cur = state.cur || 1;
         requestAnimationFrame(() => {
           scrollToPage(cur);
@@ -705,6 +790,7 @@
             for (let p = from; p <= to; p++) loadPage(p, state.blocks[p - 1]);
           }
           schedulePageUpdate();
+          maybeEvict();
         });
       }
     });
@@ -717,14 +803,6 @@
     });
 
     reader.addEventListener("scroll", schedulePageUpdate, { passive: true });
-
-    // 切换图片分流：已加载的页面保留，失败的页面重试
-    hostSelect.addEventListener("change", () => {
-      for (const block of state.blocks) {
-        if (block.dataset.failed === "1") loadPage(Number(block.dataset.page), block);
-      }
-      if (state.mode === "page" && state.cur) showSingle(state.cur);
-    });
   </script>
 </body>
 
