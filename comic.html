@@ -161,7 +161,6 @@
     function decodeToCanvas(img, num) {
       const w = img.naturalWidth;
       const h = img.naturalHeight;
-      if (w > h) return null; // 跨页图不还原
       if (!num || num < 2 || h < num * 4) return null;
       const canvas = document.createElement("canvas");
       canvas.width = w;
